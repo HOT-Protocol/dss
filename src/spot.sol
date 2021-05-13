@@ -17,9 +17,7 @@
 
 pragma solidity >=0.5.12;
 
-// FIXME: This contract was altered compared to the production version.
-// It doesn't use LibNote anymore.
-// New deployments of this contract will need to include custom events (TO DO).
+import "./lib.sol";
 
 interface VatLike {
     function file(bytes32, bytes32, uint) external;
@@ -29,11 +27,11 @@ interface PipLike {
     function peek() external returns (bytes32, bool);
 }
 
-contract Spotter {
+contract Spotter is LibNote {
     // --- Auth ---
     mapping (address => uint) public wards;
-    function rely(address guy) external auth { wards[guy] = 1;  }
-    function deny(address guy) external auth { wards[guy] = 0; }
+    function rely(address guy) external note auth { wards[guy] = 1;  }
+    function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "Spotter/not-authorized");
         _;
@@ -78,17 +76,17 @@ contract Spotter {
     }
 
     // --- Administration ---
-    function file(bytes32 ilk, bytes32 what, address pip_) external auth {
+    function file(bytes32 ilk, bytes32 what, address pip_) external note auth {
         require(live == 1, "Spotter/not-live");
         if (what == "pip") ilks[ilk].pip = PipLike(pip_);
         else revert("Spotter/file-unrecognized-param");
     }
-    function file(bytes32 what, uint data) external auth {
+    function file(bytes32 what, uint data) external note auth {
         require(live == 1, "Spotter/not-live");
         if (what == "par") par = data;
         else revert("Spotter/file-unrecognized-param");
     }
-    function file(bytes32 ilk, bytes32 what, uint data) external auth {
+    function file(bytes32 ilk, bytes32 what, uint data) external note auth {
         require(live == 1, "Spotter/not-live");
         if (what == "mat") ilks[ilk].mat = data;
         else revert("Spotter/file-unrecognized-param");
@@ -102,7 +100,7 @@ contract Spotter {
         emit Poke(ilk, val, spot);
     }
 
-    function cage() external auth {
+    function cage() external note auth {
         live = 0;
     }
 }

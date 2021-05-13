@@ -19,9 +19,7 @@
 
 pragma solidity >=0.5.12;
 
-// FIXME: This contract was altered compared to the production version.
-// It doesn't use LibNote anymore.
-// New deployments of this contract will need to include custom events (TO DO).
+import "./lib.sol";
 
 interface VatLike {
     function move(address,address,uint256) external;
@@ -46,11 +44,11 @@ interface CatLike {
  - `end` max auction duration
 */
 
-contract Flipper {
+contract Flipper is LibNote {
     // --- Auth ---
     mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; }
-    function deny(address usr) external auth { wards[usr] = 0; }
+    function rely(address usr) external note auth { wards[usr] = 1; }
+    function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "Flipper/not-authorized");
         _;
@@ -107,13 +105,13 @@ contract Flipper {
     }
 
     // --- Admin ---
-    function file(bytes32 what, uint256 data) external auth {
+    function file(bytes32 what, uint256 data) external note auth {
         if (what == "beg") beg = data;
         else if (what == "ttl") ttl = uint48(data);
         else if (what == "tau") tau = uint48(data);
         else revert("Flipper/file-unrecognized-param");
     }
-    function file(bytes32 what, address data) external auth {
+    function file(bytes32 what, address data) external note auth {
         if (what == "cat") cat = CatLike(data);
         else revert("Flipper/file-unrecognized-param");
     }
@@ -137,12 +135,12 @@ contract Flipper {
 
         emit Kick(id, lot, bid, tab, usr, gal);
     }
-    function tick(uint256 id) external {
+    function tick(uint256 id) external note {
         require(bids[id].end < now, "Flipper/not-finished");
         require(bids[id].tic == 0, "Flipper/bid-already-placed");
         bids[id].end = add(uint48(now), tau);
     }
-    function tend(uint256 id, uint256 lot, uint256 bid) external {
+    function tend(uint256 id, uint256 lot, uint256 bid) external note {
         require(bids[id].guy != address(0), "Flipper/guy-not-set");
         require(bids[id].tic > now || bids[id].tic == 0, "Flipper/already-finished-tic");
         require(bids[id].end > now, "Flipper/already-finished-end");
@@ -161,7 +159,7 @@ contract Flipper {
         bids[id].bid = bid;
         bids[id].tic = add(uint48(now), ttl);
     }
-    function dent(uint256 id, uint256 lot, uint256 bid) external {
+    function dent(uint256 id, uint256 lot, uint256 bid) external note {
         require(bids[id].guy != address(0), "Flipper/guy-not-set");
         require(bids[id].tic > now || bids[id].tic == 0, "Flipper/already-finished-tic");
         require(bids[id].end > now, "Flipper/already-finished-end");
@@ -180,14 +178,14 @@ contract Flipper {
         bids[id].lot = lot;
         bids[id].tic = add(uint48(now), ttl);
     }
-    function deal(uint256 id) external {
+    function deal(uint256 id) external note {
         require(bids[id].tic != 0 && (bids[id].tic < now || bids[id].end < now), "Flipper/not-finished");
         cat.claw(bids[id].tab);
         vat.flux(ilk, address(this), bids[id].guy, bids[id].lot);
         delete bids[id];
     }
 
-    function yank(uint256 id) external auth {
+    function yank(uint256 id) external note auth {
         require(bids[id].guy != address(0), "Flipper/guy-not-set");
         require(bids[id].bid < bids[id].tab, "Flipper/already-dent-phase");
         cat.claw(bids[id].tab);

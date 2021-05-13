@@ -19,9 +19,7 @@
 
 pragma solidity >=0.5.12;
 
-// FIXME: This contract was altered compared to the production version.
-// It doesn't use LibNote anymore.
-// New deployments of this contract will need to include custom events (TO DO).
+import "./lib.sol";
 
 interface VatLike {
     function ilks(bytes32) external returns (
@@ -31,11 +29,11 @@ interface VatLike {
     function fold(bytes32,address,int) external;
 }
 
-contract Jug {
+contract Jug is LibNote {
     // --- Auth ---
     mapping (address => uint) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; }
-    function deny(address usr) external auth { wards[usr] = 0; }
+    function rely(address usr) external note auth { wards[usr] = 1; }
+    function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "Jug/not-authorized");
         _;
@@ -98,28 +96,28 @@ contract Jug {
     }
 
     // --- Administration ---
-    function init(bytes32 ilk) external auth {
+    function init(bytes32 ilk) external note auth {
         Ilk storage i = ilks[ilk];
         require(i.duty == 0, "Jug/ilk-already-init");
         i.duty = ONE;
         i.rho  = now;
     }
-    function file(bytes32 ilk, bytes32 what, uint data) external auth {
+    function file(bytes32 ilk, bytes32 what, uint data) external note auth {
         require(now == ilks[ilk].rho, "Jug/rho-not-updated");
         if (what == "duty") ilks[ilk].duty = data;
         else revert("Jug/file-unrecognized-param");
     }
-    function file(bytes32 what, uint data) external auth {
+    function file(bytes32 what, uint data) external note auth {
         if (what == "base") base = data;
         else revert("Jug/file-unrecognized-param");
     }
-    function file(bytes32 what, address data) external auth {
+    function file(bytes32 what, address data) external note auth {
         if (what == "vow") vow = data;
         else revert("Jug/file-unrecognized-param");
     }
 
     // --- Stability Fee Collection ---
-    function drip(bytes32 ilk) external returns (uint rate) {
+    function drip(bytes32 ilk) external note returns (uint rate) {
         require(now >= ilks[ilk].rho, "Jug/invalid-now");
         (, uint prev) = vat.ilks(ilk);
         rate = rmul(rpow(add(base, ilks[ilk].duty), now - ilks[ilk].rho, ONE), prev);

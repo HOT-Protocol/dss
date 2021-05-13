@@ -19,9 +19,7 @@
 
 pragma solidity >=0.5.12;
 
-// FIXME: This contract was altered compared to the production version.
-// It doesn't use LibNote anymore.
-// New deployments of this contract will need to include custom events (TO DO).
+import "./lib.sol";
 
 /*
    "Savings Dai" is obtained when Dai is deposited into
@@ -47,11 +45,11 @@ interface VatLike {
     function suck(address,address,uint256) external;
 }
 
-contract Pot {
+contract Pot is LibNote {
     // --- Auth ---
     mapping (address => uint) public wards;
-    function rely(address guy) external auth { wards[guy] = 1; }
-    function deny(address guy) external auth { wards[guy] = 0; }
+    function rely(address guy) external note auth { wards[guy] = 1; }
+    function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "Pot/not-authorized");
         _;
@@ -123,25 +121,25 @@ contract Pot {
     }
 
     // --- Administration ---
-    function file(bytes32 what, uint256 data) external auth {
+    function file(bytes32 what, uint256 data) external note auth {
         require(live == 1, "Pot/not-live");
         require(now == rho, "Pot/rho-not-updated");
         if (what == "dsr") dsr = data;
         else revert("Pot/file-unrecognized-param");
     }
 
-    function file(bytes32 what, address addr) external auth {
+    function file(bytes32 what, address addr) external note auth {
         if (what == "vow") vow = addr;
         else revert("Pot/file-unrecognized-param");
     }
 
-    function cage() external auth {
+    function cage() external note auth {
         live = 0;
         dsr = ONE;
     }
 
     // --- Savings Rate Accumulation ---
-    function drip() external returns (uint tmp) {
+    function drip() external note returns (uint tmp) {
         require(now >= rho, "Pot/invalid-now");
         tmp = rmul(rpow(dsr, now - rho, ONE), chi);
         uint chi_ = sub(tmp, chi);
@@ -151,14 +149,14 @@ contract Pot {
     }
 
     // --- Savings Dai Management ---
-    function join(uint wad) external {
+    function join(uint wad) external note {
         require(now == rho, "Pot/rho-not-updated");
         pie[msg.sender] = add(pie[msg.sender], wad);
         Pie             = add(Pie,             wad);
         vat.move(msg.sender, address(this), mul(chi, wad));
     }
 
-    function exit(uint wad) external {
+    function exit(uint wad) external note {
         pie[msg.sender] = sub(pie[msg.sender], wad);
         Pie             = sub(Pie,             wad);
         vat.move(address(this), msg.sender, mul(chi, wad));

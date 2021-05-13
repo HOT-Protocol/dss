@@ -19,9 +19,7 @@
 
 pragma solidity >=0.5.12;
 
-// FIXME: This contract was altered compared to the production version.
-// It doesn't use LibNote anymore.
-// New deployments of this contract will need to include custom events (TO DO).
+import "./lib.sol";
 
 interface FlopLike {
     function kick(address gal, uint lot, uint bid) external returns (uint);
@@ -43,11 +41,11 @@ interface VatLike {
     function nope(address) external;
 }
 
-contract Vow {
+contract Vow is LibNote {
     // --- Auth ---
     mapping (address => uint) public wards;
-    function rely(address usr) external auth { require(live == 1, "Vow/not-live"); wards[usr] = 1; }
-    function deny(address usr) external auth { wards[usr] = 0; }
+    function rely(address usr) external note auth { require(live == 1, "Vow/not-live"); wards[usr] = 1; }
+    function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "Vow/not-authorized");
         _;
@@ -93,7 +91,7 @@ contract Vow {
     }
 
     // --- Administration ---
-    function file(bytes32 what, uint data) external auth {
+    function file(bytes32 what, uint data) external note auth {
         if (what == "wait") wait = data;
         else if (what == "bump") bump = data;
         else if (what == "sump") sump = data;
@@ -102,7 +100,7 @@ contract Vow {
         else revert("Vow/file-unrecognized-param");
     }
 
-    function file(bytes32 what, address data) external auth {
+    function file(bytes32 what, address data) external note auth {
         if (what == "flapper") {
             vat.nope(address(flapper));
             flapper = FlapLike(data);
@@ -113,24 +111,24 @@ contract Vow {
     }
 
     // Push to debt-queue
-    function fess(uint tab) external auth {
+    function fess(uint tab) external note auth {
         sin[now] = add(sin[now], tab);
         Sin = add(Sin, tab);
     }
     // Pop from debt-queue
-    function flog(uint era) external {
+    function flog(uint era) external note {
         require(add(era, wait) <= now, "Vow/wait-not-finished");
         Sin = sub(Sin, sin[era]);
         sin[era] = 0;
     }
 
     // Debt settlement
-    function heal(uint rad) external {
+    function heal(uint rad) external note {
         require(rad <= vat.dai(address(this)), "Vow/insufficient-surplus");
         require(rad <= sub(sub(vat.sin(address(this)), Sin), Ash), "Vow/insufficient-debt");
         vat.heal(rad);
     }
-    function kiss(uint rad) external {
+    function kiss(uint rad) external note {
         require(rad <= Ash, "Vow/not-enough-ash");
         require(rad <= vat.dai(address(this)), "Vow/insufficient-surplus");
         Ash = sub(Ash, rad);
@@ -138,20 +136,20 @@ contract Vow {
     }
 
     // Debt auction
-    function flop() external returns (uint id) {
+    function flop() external note returns (uint id) {
         require(sump <= sub(sub(vat.sin(address(this)), Sin), Ash), "Vow/insufficient-debt");
         require(vat.dai(address(this)) == 0, "Vow/surplus-not-zero");
         Ash = add(Ash, sump);
         id = flopper.kick(address(this), dump, sump);
     }
     // Surplus auction
-    function flap() external returns (uint id) {
+    function flap() external note returns (uint id) {
         require(vat.dai(address(this)) >= add(add(vat.sin(address(this)), bump), hump), "Vow/insufficient-surplus");
         require(sub(sub(vat.sin(address(this)), Sin), Ash) == 0, "Vow/debt-not-zero");
         id = flapper.kick(bump, 0);
     }
 
-    function cage() external auth {
+    function cage() external note auth {
         require(live == 1, "Vow/not-live");
         live = 0;
         Sin = 0;

@@ -18,7 +18,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.6.12;
+pragma solidity >=0.5.12;
 
 import "ds-test/test.sol";
 import "ds-token/token.sol";
@@ -26,11 +26,9 @@ import "ds-value/value.sol";
 
 import {Vat}  from '../vat.sol';
 import {Cat}  from '../cat.sol';
-import {Dog}  from '../dog.sol';
 import {Vow}  from '../vow.sol';
 import {Pot}  from '../pot.sol';
 import {Flipper} from '../flip.sol';
-import {Clipper} from '../clip.sol';
 import {Flapper} from '../flap.sol';
 import {Flopper} from '../flop.sol';
 import {GemJoin} from '../join.sol';
@@ -83,7 +81,6 @@ contract EndTest is DSTest {
     Vow   vow;
     Pot   pot;
     Cat   cat;
-    Dog   dog;
 
     Spotter spot;
 
@@ -92,7 +89,6 @@ contract EndTest is DSTest {
         DSToken gem;
         GemJoin gemA;
         Flipper flip;
-        Clipper clip;
     }
 
     mapping (bytes32 => Ilk) ilks;
@@ -148,19 +144,20 @@ contract EndTest is DSTest {
 
     function init_collateral(bytes32 name) internal returns (Ilk memory) {
         DSToken coin = new DSToken(name);
-        coin.mint(500_000 ether);
+        coin.mint(20 ether);
 
         DSValue pip = new DSValue();
         spot.file(name, "pip", address(pip));
-        spot.file(name, "mat", ray(2 ether));
-        // initial collateral price of 6
-        pip.poke(bytes32(6 * WAD));
-        spot.poke(name);
+        spot.file(name, "mat", ray(1.5 ether));
+        // initial collateral price of 5
+        pip.poke(bytes32(5 * WAD));
 
         vat.init(name);
-        vat.file(name, "line", rad(1_000_000 ether));
-
         GemJoin gemA = new GemJoin(address(vat), name, address(coin));
+
+        // 1 coin = 6 dai and liquidation ratio is 200%
+        vat.file(name, "spot",    ray(3 ether));
+        vat.file(name, "line", rad(1000 ether));
 
         coin.approve(address(gemA));
         coin.approve(address(vat));
@@ -177,22 +174,10 @@ contract EndTest is DSTest {
         cat.file(name, "dunk", rad(25000 ether));
         cat.file("box", rad((10 ether) * MLN));
 
-        Clipper clip = new Clipper(address(vat), address(spot), address(dog), name);
-        vat.rely(address(clip));
-        vat.hope(address(clip));
-        clip.rely(address(end));
-        clip.rely(address(dog));
-        dog.rely(address(clip));
-        dog.file(name, "clip", address(clip));
-        dog.file(name, "chop", 1.1 ether);
-        dog.file(name, "hole", rad(25000 ether));
-        dog.file("Hole", rad((25000 ether)));
-
         ilks[name].pip = pip;
         ilks[name].gem = coin;
         ilks[name].gemA = gemA;
         ilks[name].flip = flip;
-        ilks[name].clip = clip;
 
         return ilks[name];
     }
@@ -219,19 +204,13 @@ contract EndTest is DSTest {
         vat.rely(address(cat));
         vow.rely(address(cat));
 
-        dog = new Dog(address(vat));
-        dog.file("vow", address(vow));
-        vat.rely(address(dog));
-        vow.rely(address(dog));
-
         spot = new Spotter(address(vat));
-        vat.file("Line",         rad(1_000_000 ether));
+        vat.file("Line",         rad(1000 ether));
         vat.rely(address(spot));
 
         end = new End();
         end.file("vat", address(vat));
         end.file("cat", address(cat));
-        end.file("dog", address(dog));
         end.file("vow", address(vow));
         end.file("pot", address(pot));
         end.file("spot", address(spot));
@@ -241,7 +220,6 @@ contract EndTest is DSTest {
         spot.rely(address(end));
         pot.rely(address(end));
         cat.rely(address(end));
-        dog.rely(address(end));
         flap.rely(address(vow));
         flop.rely(address(vow));
     }
@@ -505,100 +483,6 @@ contract EndTest is DSTest {
         assertEq(balanceOf("gold", address(gold.gemA)), 0);
     }
 
-    // -- Scenario where there is one collateralised CDP
-    // -- undergoing auction at the time of cage
-    function test_cage_snip() public {
-        Ilk memory gold = init_collateral("gold");
-
-        Usr ali = new Usr(vat, end);
-
-        vat.fold("gold", address(vow), int256(ray(0.25 ether)));
-
-        // Make a CDP:
-        address urn1 = address(ali);
-        gold.gemA.join(urn1, 10 ether);
-        ali.frob("gold", urn1, urn1, urn1, 10 ether, 15 ether);
-        (uint ink1, uint art1) = vat.urns("gold", urn1); // CDP before liquidation
-        (, uint rate,,,) = vat.ilks("gold");
-
-        assertEq(vat.gem("gold", urn1), 0);
-        assertEq(rate, ray(1.25 ether));
-        assertEq(ink1, 10 ether);
-        assertEq(art1, 15 ether);
-
-        vat.file("gold", "spot", ray(1 ether)); // Now unsafe
-
-        uint256 id = dog.bark("gold", urn1, address(this));
-
-        uint256 tab1;
-        uint256 lot1;
-        {
-            uint256 pos1;
-            address usr1;
-            uint96  tic1;
-            uint256 top1;
-            (pos1, tab1, lot1, usr1, tic1, top1) = gold.clip.sales(id);
-            assertEq(pos1, 0);
-            assertEq(tab1, art1 * rate * 1.1 ether / WAD); // tab uses chop
-            assertEq(lot1, ink1);
-            assertEq(usr1, address(ali));
-            assertEq(uint256(tic1), now);
-            assertEq(uint256(top1), ray(6 ether));
-        }
-
-        assertEq(dog.Dirt(), tab1);
-
-        {
-            (uint ink2, uint art2) = vat.urns("gold", urn1); // CDP after liquidation
-            assertEq(ink2, 0);
-            assertEq(art2, 0);
-        }
-
-        // Collateral price is $5
-        gold.pip.poke(bytes32(5 * WAD));
-        spot.poke("gold");
-        end.cage();
-        end.cage("gold");
-        assertEq(end.tag("gold"), ray(0.2 ether)); // par / price = collateral per DAI
-
-        assertEq(vat.gem("gold", address(gold.clip)), lot1); // From grab in dog.bark()
-        assertEq(vat.sin(address(vow)),        art1 * rate); // From grab in dog.bark()
-        assertEq(vat.vice(),                   art1 * rate); // From grab in dog.bark()
-        assertEq(vat.debt(),                   art1 * rate); // From frob
-        assertEq(vat.dai(address(vow)),                  0); // vat.suck() hasn't been called
-
-        end.snip("gold", id);
-
-        {
-            uint256 pos2;
-            uint256 tab2;
-            uint256 lot2;
-            address usr2;
-            uint96  tic2;
-            uint256 top2;
-            (pos2, tab2, lot2, usr2, tic2, top2) = gold.clip.sales(id);
-            assertEq(pos2,          0);
-            assertEq(tab2,          0);
-            assertEq(lot2,          0);
-            assertEq(usr2,  address(0));
-            assertEq(uint256(tic2), 0);
-            assertEq(uint256(top2), 0);
-        }
-
-        assertEq(dog.Dirt(),                            0); // From clip.yank()
-        assertEq(vat.gem("gold", address(gold.clip)),   0); // From clip.yank()
-        assertEq(vat.gem("gold", address(end)),         0); // From grab in end.snip()
-        assertEq(vat.sin(address(vow)),       art1 * rate); // From grab in dog.bark()
-        assertEq(vat.vice(),                  art1 * rate); // From grab in dog.bark()
-        assertEq(vat.debt(),           tab1 + art1 * rate); // From frob and suck
-        assertEq(vat.dai(address(vow)),              tab1); // From vat.suck()
-        assertEq(end.Art("gold") * rate,             tab1); // Incrementing total Art in End
-
-        (uint ink3, uint art3) = vat.urns("gold", urn1);    // CDP after snip
-        assertEq(ink3, 10 ether);                           // All collateral returned to CDP
-        assertEq(art3, tab1 / rate);                        // Tab amount of normalized debt transferred back into CDP
-    }
-
     // -- Scenario where there is one over-collateralised CDP
     // -- and there is a deficit in the Vow
     function test_cage_collateralised_deficit() public {
@@ -849,125 +733,5 @@ contract EndTest is DSTest {
         assertEq(end.out("coal", address(ali)), 2 ether);
         assertEq(gem("gold", address(ali)), 0.375 ether);
         assertEq(gem("coal", address(ali)), 0.05 ether);
-    }
-
-    // -- Scenario where flow() used to overflow
-    function test_overflow() public {
-        Ilk memory gold = init_collateral("gold");
-
-        Usr ali = new Usr(vat, end);
-
-        // make a CDP:
-        address urn1 = address(ali);
-        gold.gemA.join(urn1, 500_000 ether);
-        ali.frob("gold", urn1, urn1, urn1, 500_000 ether, 1_000_000 ether);
-        // ali's urn has 500_000 ink, 10^6 art (and 10^6 dai since rate == RAY)
-
-        // global checks:
-        assertEq(vat.debt(), rad(1_000_000 ether));
-        assertEq(vat.vice(), 0);
-
-        // collateral price is 5
-        gold.pip.poke(bytes32(5 * WAD));
-        end.cage();
-        end.cage("gold");
-        end.skim("gold", urn1);
-
-        // local checks:
-        assertEq(art("gold", urn1), 0);
-        assertEq(ink("gold", urn1), 300_000 ether);
-        assertEq(vat.sin(address(vow)), rad(1_000_000 ether));
-
-        // global checks:
-        assertEq(vat.debt(), rad(1_000_000 ether));
-        assertEq(vat.vice(), rad(1_000_000 ether));
-
-        // CDP closing
-        ali.free("gold");
-        assertEq(ink("gold", urn1), 0);
-        assertEq(gem("gold", urn1), 300_000 ether);
-        ali.exit(gold.gemA, address(this), 300_000 ether);
-
-        hevm.warp(now + 1 hours);
-        end.thaw();
-        end.flow("gold");
-    }
-
-    uint256 constant RAD = 10**45;
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x);
-    }
-    function wdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = mul(x, WAD) / y;
-    }
-    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = mul(x, RAY) / y;
-    }
-    function fix_calc_0(uint256 col, uint256 debt) internal pure returns (uint256) {
-        return rdiv(mul(col, RAY), debt);
-    }
-    function fix_calc_1(uint256 col, uint256 debt) internal pure returns (uint256) {
-        return wdiv(mul(col, RAY), (debt / 10**9));
-    }
-    function fix_calc_2(uint256 col, uint256 debt) internal pure returns (uint256) {
-        return mul(col, RAY) / (debt / RAY);
-    }
-    function wAssertCloseEnough(uint256 x, uint256 y) internal {
-        uint256 diff = x > y ? x - y : y - x;
-        if (diff == 0) return;
-        uint256 xErr = mul(diff, WAD) / x;
-        uint256 yErr = mul(diff, WAD) / y;
-        uint256 err  = xErr > yErr ? xErr : yErr;
-        assertTrue(err < WAD / 100_000_000);  // Error no more than one part in a hundred million
-    }
-    uint256 constant MIN_DEBT   = 10**6 * RAD;  // Minimum debt for fuzz runs
-    uint256 constant REDEEM_AMT = 1_000 * WAD;  // Amount of DAI to redeem for error checking
-    function test_fuzz_fix_calcs_0_1(uint256 col_seed, uint192 debt_seed) public {
-        uint256 col = col_seed % (115792 * WAD);  // somewhat biased, but not enough to matter
-        if (col < 10**12) col += 10**12;  // At least 10^-6 WAD units of collateral; this makes the fixes almost always non-zero.
-        uint256 debt = debt_seed;
-        if (debt < MIN_DEBT) debt += MIN_DEBT;  // consider at least MIN_DEBT of debt
-
-        uint256 fix0 = fix_calc_0(col, debt);
-        uint256 fix1 = fix_calc_1(col, debt);
-
-        // how much collateral can be obtained with a single DAI in each case
-        uint256 col0 = rmul(REDEEM_AMT, fix0);
-        uint256 col1 = rmul(REDEEM_AMT, fix1);
-
-        // Assert on percentage error of returned collateral
-        wAssertCloseEnough(col0, col1);
-    }
-    function test_fuzz_fix_calcs_0_2(uint256 col_seed, uint192 debt_seed) public {
-        uint256 col = col_seed % (115792 * WAD);  // somewhat biased, but not enough to matter
-        if (col < 10**12) col += 10**12;  // At least 10^-6 WAD units of collateral; this makes the fixes almost always non-zero.
-        uint256 debt = debt_seed;
-        if (debt < MIN_DEBT) debt += MIN_DEBT;  // consider at least MIN_DEBT of debt
-
-        uint256 fix0 = fix_calc_0(col, debt);
-        uint256 fix2 = fix_calc_2(col, debt);
-
-        // how much collateral can be obtained with a single DAI in each case
-        uint256 col0 = rmul(REDEEM_AMT, fix0);
-        uint256 col2 = rmul(REDEEM_AMT, fix2);
-
-        // Assert on percentage error of returned collateral
-        wAssertCloseEnough(col0, col2);
-    }
-    function test_fuzz_fix_calcs_1_2(uint256 col_seed, uint192 debt_seed) public {
-        uint256 col = col_seed % (10**14 * WAD);  // somewhat biased, but not enough to matter
-        if (col < 10**12) col += 10**12;  // At least 10^-6 WAD units of collateral; this makes the fixes almost always non-zero.
-        uint256 debt = debt_seed;
-        if (debt < MIN_DEBT) debt += MIN_DEBT;  // consider at least MIN_DEBT of debt
-
-        uint256 fix1 = fix_calc_1(col, debt);
-        uint256 fix2 = fix_calc_2(col, debt);
-
-        // how much collateral can be obtained with a single DAI in each case
-        uint256 col1 = rmul(REDEEM_AMT, fix1);
-        uint256 col2 = rmul(REDEEM_AMT, fix2);
-
-        // Assert on percentage error of returned collateral
-        wAssertCloseEnough(col1, col2);
     }
 }

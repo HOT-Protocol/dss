@@ -4,7 +4,6 @@
 
 // Copyright (C) 2018 Rain <rainbreak@riseup.net>
 // Copyright (C) 2018 Lev Livnev <lev@liv.nev.org.uk>
-// Copyright (C) 2020-2021 Maker Ecosystem Growth Holdings, INC.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +18,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.6.12;
+pragma solidity >=0.5.12;
+
+import "./lib.sol";
 
 interface VatLike {
     function dai(address) external view returns (uint256);
@@ -42,7 +43,6 @@ interface VatLike {
     function suck(address u, address v, uint256 rad) external;
     function cage() external;
 }
-
 interface CatLike {
     function ilks(bytes32) external returns (
         address flip,
@@ -51,27 +51,14 @@ interface CatLike {
     );
     function cage() external;
 }
-
-interface DogLike {
-    function ilks(bytes32) external returns (
-        address clip,
-        uint256 chop,
-        uint256 hole,
-        uint256 dirt
-    );
-    function cage() external;
-}
-
 interface PotLike {
     function cage() external;
 }
-
 interface VowLike {
     function cage() external;
 }
-
-interface FlipLike {
-    function bids(uint256 id) external view returns (
+interface Flippy {
+    function bids(uint id) external view returns (
         uint256 bid,   // [rad]
         uint256 lot,   // [wad]
         address guy,
@@ -81,26 +68,14 @@ interface FlipLike {
         address gal,
         uint256 tab    // [rad]
     );
-    function yank(uint256 id) external;
-}
-
-interface ClipLike {
-    function sales(uint256 id) external view returns (
-        uint256 pos,
-        uint256 tab,
-        uint256 lot,
-        address usr,
-        uint96  tic,
-        uint256 top
-    );
-    function yank(uint256 id) external;
+    function yank(uint id) external;
 }
 
 interface PipLike {
     function read() external view returns (bytes32);
 }
 
-interface SpotLike {
+interface Spotty {
     function par() external view returns (uint256);
     function ilks(bytes32) external view returns (
         PipLike pip,
@@ -143,13 +118,11 @@ interface SpotLike {
 
     We determine (b) by processing ongoing dai generating processes,
     i.e. auctions. We need to ensure that auctions will not generate any
-    further dai income.
-
-    In the two-way auction model (Flipper) this occurs when
+    further dai income. In the two-way auction model this occurs when
     all auctions are in the reverse (`dent`) phase. There are two ways
     of ensuring this:
 
-    4a. i) `wait`: set the cooldown period to be at least as long as the
+    4.  i) `wait`: set the cooldown period to be at least as long as the
            longest auction duration, which needs to be determined by the
            cage administrator.
 
@@ -164,26 +137,13 @@ interface SpotLike {
 
            `skip(ilk, id)`:
             - cancel individual flip auctions in the `tend` (forward) phase
-            - retrieves collateral and debt (including penalty) to owner's CDP
-            - returns dai to last bidder
+            - retrieves collateral and returns dai to bidder
             - `dent` (reverse) phase auctions can continue normally
 
-    Option (i), `wait`, is sufficient (if all auctions were bidded at least
-    once) for processing the system settlement but option (ii), `skip`,
-    will speed it up. Both options are available in this implementation,
-    with `skip` being enabled on a per-auction basis.
-
-    In the case of the Dutch Auctions model (Clipper) they keep recovering
-    debt during the whole lifetime and there isn't a max duration time
-    guaranteed for the auction to end.
-    So the way to ensure the protocol will not receive extra dai income is:
-
-    4b. i) `snip`: cancel all ongoing auctions and seize the collateral.
-
-           `snip(ilk, id)`:
-            - cancel individual running clip auctions
-            - retrieves remaining collateral and debt (including penalty)
-              to owner's CDP
+    Option (i), `wait`, is sufficient for processing the system
+    settlement but option (ii), `skip`, will speed it up. Both options
+    are available in this implementation, with `skip` being enabled on a
+    per-auction basis.
 
     When a CDP has been processed and has no debt remaining, the
     remaining collateral can be removed.
@@ -224,11 +184,11 @@ interface SpotLike {
         - the number of gems is limited by how big your bag is
 */
 
-contract End {
+contract End is LibNote {
     // --- Auth ---
-    mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
+    mapping (address => uint) public wards;
+    function rely(address guy) external note auth { wards[guy] = 1; }
+    function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
         require(wards[msg.sender] == 1, "End/not-authorized");
         _;
@@ -237,10 +197,9 @@ contract End {
     // --- Data ---
     VatLike  public vat;   // CDP Engine
     CatLike  public cat;
-    DogLike  public dog;
     VowLike  public vow;   // Debt Engine
     PotLike  public pot;
-    SpotLike public spot;
+    Spotty   public spot;
 
     uint256  public live;  // Active Flag
     uint256  public when;  // Time of cage                   [unix epoch time]
@@ -255,187 +214,140 @@ contract End {
     mapping (address => uint256)                      public bag;  //    [wad]
     mapping (bytes32 => mapping (address => uint256)) public out;  //    [wad]
 
-    // --- Events ---
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-
-    event File(bytes32 indexed what, uint256 data);
-    event File(bytes32 indexed what, address data);
-
-    event Cage();
-    event Cage(bytes32 indexed ilk);
-    event Snip(bytes32 indexed ilk, uint256 indexed id, address indexed usr, uint256 tab, uint256 lot, uint256 art);
-    event Skip(bytes32 indexed ilk, uint256 indexed id, address indexed usr, uint256 tab, uint256 lot, uint256 art);
-    event Skim(bytes32 indexed ilk, address indexed urn, uint256 wad, uint256 art);
-    event Free(bytes32 indexed ilk, address indexed usr, uint256 ink);
-    event Thaw();
-    event Flow(bytes32 indexed ilk);
-    event Pack(address indexed usr, uint256 wad);
-    event Cash(bytes32 indexed ilk, address indexed usr, uint256 wad);
-
     // --- Init ---
     constructor() public {
         wards[msg.sender] = 1;
         live = 1;
-        emit Rely(msg.sender);
     }
 
     // --- Math ---
-    uint256 constant WAD = 10 ** 18;
-    uint256 constant RAY = 10 ** 27;
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function add(uint x, uint y) internal pure returns (uint z) {
         z = x + y;
         require(z >= x);
     }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function sub(uint x, uint y) internal pure returns (uint z) {
         require((z = x - y) <= x);
     }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function mul(uint x, uint y) internal pure returns (uint z) {
         require(y == 0 || (z = x * y) / y == x);
     }
-    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function min(uint x, uint y) internal pure returns (uint z) {
         return x <= y ? x : y;
     }
-    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    uint constant WAD = 10 ** 18;
+    uint constant RAY = 10 ** 27;
+    function rmul(uint x, uint y) internal pure returns (uint z) {
         z = mul(x, y) / RAY;
     }
-    function wdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function rdiv(uint x, uint y) internal pure returns (uint z) {
+        z = mul(x, RAY) / y;
+    }
+    function wdiv(uint x, uint y) internal pure returns (uint z) {
         z = mul(x, WAD) / y;
     }
 
     // --- Administration ---
-    function file(bytes32 what, address data) external auth {
+    function file(bytes32 what, address data) external note auth {
         require(live == 1, "End/not-live");
         if (what == "vat")  vat = VatLike(data);
-        else if (what == "cat")   cat = CatLike(data);
-        else if (what == "dog")   dog = DogLike(data);
-        else if (what == "vow")   vow = VowLike(data);
-        else if (what == "pot")   pot = PotLike(data);
-        else if (what == "spot") spot = SpotLike(data);
+        else if (what == "cat")  cat = CatLike(data);
+        else if (what == "vow")  vow = VowLike(data);
+        else if (what == "pot")  pot = PotLike(data);
+        else if (what == "spot") spot = Spotty(data);
         else revert("End/file-unrecognized-param");
-        emit File(what, data);
     }
-    function file(bytes32 what, uint256 data) external auth {
+    function file(bytes32 what, uint256 data) external note auth {
         require(live == 1, "End/not-live");
         if (what == "wait") wait = data;
         else revert("End/file-unrecognized-param");
-        emit File(what, data);
     }
 
     // --- Settlement ---
-    function cage() external auth {
+    function cage() external note auth {
         require(live == 1, "End/not-live");
         live = 0;
-        when = block.timestamp;
+        when = now;
         vat.cage();
         cat.cage();
-        dog.cage();
         vow.cage();
         spot.cage();
         pot.cage();
-        emit Cage();
     }
 
-    function cage(bytes32 ilk) external {
+    function cage(bytes32 ilk) external note {
         require(live == 0, "End/still-live");
         require(tag[ilk] == 0, "End/tag-ilk-already-defined");
         (Art[ilk],,,,) = vat.ilks(ilk);
         (PipLike pip,) = spot.ilks(ilk);
         // par is a ray, pip returns a wad
-        tag[ilk] = wdiv(spot.par(), uint256(pip.read()));
-        emit Cage(ilk);
+        tag[ilk] = wdiv(spot.par(), uint(pip.read()));
     }
 
-    function snip(bytes32 ilk, uint256 id) external {
+    function skip(bytes32 ilk, uint256 id) external note {
         require(tag[ilk] != 0, "End/tag-ilk-not-defined");
 
-        (address _clip,,,) = dog.ilks(ilk);
-        ClipLike clip = ClipLike(_clip);
-        (, uint256 rate,,,) = vat.ilks(ilk);
-        (, uint256 tab, uint256 lot, address usr,,) = clip.sales(id);
-
-        vat.suck(address(vow), address(vow),  tab);
-        clip.yank(id);
-
-        uint256 art = tab / rate;
-        Art[ilk] = add(Art[ilk], art);
-        require(int256(lot) >= 0 && int256(art) >= 0, "End/overflow");
-        vat.grab(ilk, usr, address(this), address(vow), int256(lot), int256(art));
-        emit Snip(ilk, id, usr, tab, lot, art);
-    }
-
-    function skip(bytes32 ilk, uint256 id) external {
-        require(tag[ilk] != 0, "End/tag-ilk-not-defined");
-
-        (address _flip,,) = cat.ilks(ilk);
-        FlipLike flip = FlipLike(_flip);
-        (, uint256 rate,,,) = vat.ilks(ilk);
-        (uint256 bid, uint256 lot,,,, address usr,, uint256 tab) = flip.bids(id);
+        (address flipV,,) = cat.ilks(ilk);
+        Flippy flip = Flippy(flipV);
+        (, uint rate,,,) = vat.ilks(ilk);
+        (uint bid, uint lot,,,, address usr,, uint tab) = flip.bids(id);
 
         vat.suck(address(vow), address(vow),  tab);
         vat.suck(address(vow), address(this), bid);
         vat.hope(address(flip));
         flip.yank(id);
 
-        uint256 art = tab / rate;
+        uint art = tab / rate;
         Art[ilk] = add(Art[ilk], art);
-        require(int256(lot) >= 0 && int256(art) >= 0, "End/overflow");
-        vat.grab(ilk, usr, address(this), address(vow), int256(lot), int256(art));
-        emit Skip(ilk, id, usr, tab, lot, art);
+        require(int(lot) >= 0 && int(art) >= 0, "End/overflow");
+        vat.grab(ilk, usr, address(this), address(vow), int(lot), int(art));
     }
 
-    function skim(bytes32 ilk, address urn) external {
+    function skim(bytes32 ilk, address urn) external note {
         require(tag[ilk] != 0, "End/tag-ilk-not-defined");
-        (, uint256 rate,,,) = vat.ilks(ilk);
-        (uint256 ink, uint256 art) = vat.urns(ilk, urn);
+        (, uint rate,,,) = vat.ilks(ilk);
+        (uint ink, uint art) = vat.urns(ilk, urn);
 
-        uint256 owe = rmul(rmul(art, rate), tag[ilk]);
-        uint256 wad = min(ink, owe);
+        uint owe = rmul(rmul(art, rate), tag[ilk]);
+        uint wad = min(ink, owe);
         gap[ilk] = add(gap[ilk], sub(owe, wad));
 
         require(wad <= 2**255 && art <= 2**255, "End/overflow");
-        vat.grab(ilk, urn, address(this), address(vow), -int256(wad), -int256(art));
-        emit Skim(ilk, urn, wad, art);
+        vat.grab(ilk, urn, address(this), address(vow), -int(wad), -int(art));
     }
 
-    function free(bytes32 ilk) external {
+    function free(bytes32 ilk) external note {
         require(live == 0, "End/still-live");
-        (uint256 ink, uint256 art) = vat.urns(ilk, msg.sender);
+        (uint ink, uint art) = vat.urns(ilk, msg.sender);
         require(art == 0, "End/art-not-zero");
         require(ink <= 2**255, "End/overflow");
-        vat.grab(ilk, msg.sender, msg.sender, address(vow), -int256(ink), 0);
-        emit Free(ilk, msg.sender, ink);
+        vat.grab(ilk, msg.sender, msg.sender, address(vow), -int(ink), 0);
     }
 
-    function thaw() external {
+    function thaw() external note {
         require(live == 0, "End/still-live");
         require(debt == 0, "End/debt-not-zero");
         require(vat.dai(address(vow)) == 0, "End/surplus-not-zero");
-        require(block.timestamp >= add(when, wait), "End/wait-not-finished");
+        require(now >= add(when, wait), "End/wait-not-finished");
         debt = vat.debt();
-        emit Thaw();
     }
-    function flow(bytes32 ilk) external {
+    function flow(bytes32 ilk) external note {
         require(debt != 0, "End/debt-zero");
         require(fix[ilk] == 0, "End/fix-ilk-already-defined");
 
-        (, uint256 rate,,,) = vat.ilks(ilk);
+        (, uint rate,,,) = vat.ilks(ilk);
         uint256 wad = rmul(rmul(Art[ilk], rate), tag[ilk]);
-        fix[ilk] = mul(sub(wad, gap[ilk]), RAY) / (debt / RAY);
-        emit Flow(ilk);
+        fix[ilk] = rdiv(mul(sub(wad, gap[ilk]), RAY), debt);
     }
 
-    function pack(uint256 wad) external {
+    function pack(uint256 wad) external note {
         require(debt != 0, "End/debt-zero");
         vat.move(msg.sender, address(vow), mul(wad, RAY));
         bag[msg.sender] = add(bag[msg.sender], wad);
-        emit Pack(msg.sender, wad);
     }
-    function cash(bytes32 ilk, uint256 wad) external {
+    function cash(bytes32 ilk, uint wad) external note {
         require(fix[ilk] != 0, "End/fix-ilk-not-defined");
         vat.flux(ilk, address(this), msg.sender, rmul(wad, fix[ilk]));
         out[ilk][msg.sender] = add(out[ilk][msg.sender], wad);
         require(out[ilk][msg.sender] <= bag[msg.sender], "End/insufficient-bag-balance");
-        emit Cash(ilk, msg.sender, wad);
     }
 }
