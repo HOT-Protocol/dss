@@ -117,6 +117,8 @@ contract Flapper is LibNote {
         emit Kick(id, lot, bid);
     }
     function tick(uint id) external note {
+        require(live == 1, "Flapper/not-live");
+        require(bids[id].guy != address(0), "Flapper/guy-not-set");
         require(bids[id].end < now, "Flapper/not-finished");
         require(bids[id].tic == 0, "Flapper/bid-already-placed");
         bids[id].end = add(uint48(now), tau);

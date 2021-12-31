@@ -136,6 +136,7 @@ contract Flipper is LibNote {
         emit Kick(id, lot, bid, tab, usr, gal);
     }
     function tick(uint256 id) external note {
+        require(bids[id].guy != address(0), "Flipper/guy-not-set");
         require(bids[id].end < now, "Flipper/not-finished");
         require(bids[id].tic == 0, "Flipper/bid-already-placed");
         bids[id].end = add(uint48(now), tau);
