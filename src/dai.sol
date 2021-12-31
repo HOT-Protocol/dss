@@ -52,11 +52,13 @@ contract Dai is LibNote {
     }
 
     // --- EIP712 niceties ---
+    uint256 public chainId;
     bytes32 public DOMAIN_SEPARATOR;
     // bytes32 public constant PERMIT_TYPEHASH = keccak256("Permit(address holder,address spender,uint256 nonce,uint256 expiry,bool allowed)");
     bytes32 public constant PERMIT_TYPEHASH = 0xea2aa0a1be11a07ed86d755c93467f4f82362b452371d1ba94d1715123511acb;
 
     constructor(uint256 chainId_) public {
+        chainId = chainId_;
         wards[msg.sender] = 1;
         DOMAIN_SEPARATOR = keccak256(abi.encode(
             keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
@@ -120,6 +122,21 @@ contract Dai is LibNote {
     function permit(address holder, address spender, uint256 nonce, uint256 expiry,
                     bool allowed, uint8 v, bytes32 r, bytes32 s) external
     {
+        uint256 currChainId;
+        assembly {
+            currChainId := chainid()
+        }
+        if (chainId != currChainId) {
+            chainId = currChainId;
+            DOMAIN_SEPARATOR = keccak256(abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes(name)),
+                keccak256(bytes(version)),
+                chainId,
+                address(this)
+            ));
+        }
+
         bytes32 digest =
             keccak256(abi.encodePacked(
                 "\x19\x01",
