@@ -71,7 +71,7 @@ contract Flipper is LibNote {
     VatLike public   vat;            // CDP Engine
     bytes32 public   ilk;            // collateral type
 
-    uint256 constant ONE = 1.00E18;
+    uint256 constant private ONE = 1.00E18;
     uint256 public   beg = 1.05E18;  // 5% minimum bid increase
     uint48  public   ttl = 3 hours;  // 3 hours bid duration         [seconds]
     uint48  public   tau = 2 days;   // 2 days total auction length  [seconds]

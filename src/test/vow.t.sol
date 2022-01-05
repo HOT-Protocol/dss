@@ -89,7 +89,7 @@ contract VowTest is DSTest {
         if (ok) return true;
     }
 
-    uint256 constant ONE = 10 ** 27;
+    uint256 constant private ONE = 10 ** 27;
     function rad(uint256 wad) internal pure returns (uint256) {
         return wad * ONE;
     }

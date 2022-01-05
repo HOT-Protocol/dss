@@ -124,7 +124,7 @@ contract DaiJoin is LibNote {
     function cage() external note auth {
         live = 0;
     }
-    uint256 constant ONE = 10 ** 27;
+    uint256 constant private ONE = 10 ** 27;
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "DaiJoin/mul-overflow");
     }

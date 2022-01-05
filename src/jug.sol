@@ -80,7 +80,7 @@ contract Jug is LibNote {
         }
       }
     }
-    uint256 constant ONE = 10 ** 27;
+    uint256 constant private ONE = 10 ** 27;
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         require(z >= x, "Jug/add-overflow");

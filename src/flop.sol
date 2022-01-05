@@ -68,7 +68,7 @@ contract Flopper is LibNote {
     VatLike  public   vat;  // CDP Engine
     GemLike  public   gem;
 
-    uint256  constant ONE = 1.00E18;
+    uint256  constant private ONE = 1.00E18;
     uint256  public   beg = 1.05E18;  // 5% minimum bid increase
     uint256  public   pad = 1.50E18;  // 50% lot increase for tick
     uint48   public   ttl = 3 hours;  // 3 hours bid lifetime         [seconds]
