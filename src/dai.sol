@@ -76,6 +76,7 @@ contract Dai is LibNote {
     function transferFrom(address src, address dst, uint wad)
         public returns (bool)
     {
+        require(dst != address(0), "Hgbp/zero-address");
         require(balanceOf[src] >= wad, "Hgbp/insufficient-balance");
         if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
             require(allowance[src][msg.sender] >= wad, "Hgbp/insufficient-allowance");
@@ -87,11 +88,13 @@ contract Dai is LibNote {
         return true;
     }
     function mint(address usr, uint wad) external auth {
+        require(usr != address(0), "Hgbp/zero-address");
         balanceOf[usr] = add(balanceOf[usr], wad);
         totalSupply    = add(totalSupply, wad);
         emit Transfer(address(0), usr, wad);
     }
     function burn(address usr, uint wad) external {
+        require(usr != address(0), "Hgbp/zero-address");
         require(balanceOf[usr] >= wad, "Hgbp/insufficient-balance");
         if (usr != msg.sender && allowance[usr][msg.sender] != uint(-1)) {
             require(allowance[usr][msg.sender] >= wad, "Hgbp/insufficient-allowance");
@@ -102,6 +105,7 @@ contract Dai is LibNote {
         emit Transfer(usr, address(0), wad);
     }
     function approve(address usr, uint wad) external returns (bool) {
+        require(usr != address(0), "Hgbp/zero-address");
         allowance[msg.sender][usr] = wad;
         emit Approval(msg.sender, usr, wad);
         return true;
