@@ -83,15 +83,15 @@ contract Jug is LibNote {
     uint256 constant ONE = 10 ** 27;
     function add(uint x, uint y) internal pure returns (uint z) {
         z = x + y;
-        require(z >= x);
+        require(z >= x, "Jug/add-overflow");
     }
     function diff(uint x, uint y) internal pure returns (int z) {
         z = int(x) - int(y);
-        require(int(x) >= 0 && int(y) >= 0);
+        require(int(x) >= 0 && int(y) >= 0, "Jug/int-overflow");
     }
     function rmul(uint x, uint y) internal pure returns (uint z) {
         z = x * y;
-        require(y == 0 || z / y == x);
+        require(y == 0 || z / y == x, "Jug/mul-overflow");
         z = z / ONE;
     }
 

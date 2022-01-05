@@ -108,7 +108,7 @@ contract EndTest is DSTest {
     }
     function rmul(uint x, uint y) internal pure returns (uint z) {
         z = x * y;
-        require(y == 0 || z / y == x);
+        require(y == 0 || z / y == x, "EndTest/mul-overflow");
         z = z / RAY;
     }
     function min(uint x, uint y) internal pure returns (uint z) {

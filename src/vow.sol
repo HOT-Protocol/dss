@@ -81,10 +81,10 @@ contract Vow is LibNote {
 
     // --- Math ---
     function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "Vow/add-overflow");
     }
     function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
+        require((z = x - y) <= x, "Vow/sub-underflow");
     }
     function min(uint x, uint y) internal pure returns (uint z) {
         return x <= y ? x : y;

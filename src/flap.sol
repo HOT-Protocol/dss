@@ -87,10 +87,10 @@ contract Flapper is LibNote {
 
     // --- Math ---
     function add(uint48 x, uint48 y) internal pure returns (uint48 z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "Flapper/add-overflow");
     }
     function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+        require(y == 0 || (z = x * y) / y == x, "Flapper/mul-overflow");
     }
 
     // --- Admin ---

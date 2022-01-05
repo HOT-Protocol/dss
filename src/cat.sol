@@ -97,13 +97,13 @@ contract Cat is LibNote {
         if (x > y) { z = y; } else { z = x; }
     }
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "Cat/add-overflow");
     }
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x);
+        require((z = x - y) <= x, "Cat/sub-underflow");
     }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x);
+        require(y == 0 || (z = x * y) / y == x, "Cat/mul-overflow");
     }
 
     // --- Administration ---

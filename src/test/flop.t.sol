@@ -48,7 +48,7 @@ contract Guy {
 contract Gal {
     uint public Ash;
     function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
+        require((z = x - y) <= x, "Gal/sub-underflow");
     }
     function kick(Flopper flop, uint lot, uint bid) external returns (uint) {
         Ash += bid;

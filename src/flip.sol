@@ -98,10 +98,10 @@ contract Flipper is LibNote {
 
     // --- Math ---
     function add(uint48 x, uint48 y) internal pure returns (uint48 z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "Flipper/add-overflow");
     }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x);
+        require(y == 0 || (z = x * y) / y == x, "Flipper/mul-overflow");
     }
 
     // --- Admin ---

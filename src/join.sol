@@ -126,7 +126,7 @@ contract DaiJoin is LibNote {
     }
     uint constant ONE = 10 ** 27;
     function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x);
+        require(y == 0 || (z = x * y) / y == x, "DaiJoin/mul-overflow");
     }
     function join(address usr, uint wad) external note {
         vat.move(address(this), usr, mul(ONE, wad));

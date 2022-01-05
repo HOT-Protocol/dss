@@ -45,10 +45,10 @@ contract Dai is LibNote {
 
     // --- Math ---
     function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "Hgbp/add-overflow");
     }
     function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x);
+        require((z = x - y) <= x, "Hgbp/sub-underflow");
     }
 
     // --- EIP712 niceties ---
