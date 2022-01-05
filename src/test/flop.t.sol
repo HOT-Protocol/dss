@@ -19,25 +19,25 @@ contract Guy {
         Vat(address(flop.vat())).hope(address(flop));
         DSToken(address(flop.gem())).approve(address(flop));
     }
-    function dent(uint id, uint lot, uint bid) public {
+    function dent(uint256 id, uint256 lot, uint256 bid) public {
         flop.dent(id, lot, bid);
     }
-    function deal(uint id) public {
+    function deal(uint256 id) public {
         flop.deal(id);
     }
-    function try_dent(uint id, uint lot, uint bid)
+    function try_dent(uint256 id, uint256 lot, uint256 bid)
         public returns (bool ok)
     {
         string memory sig = "dent(uint256,uint256,uint256)";
         (ok,) = address(flop).call(abi.encodeWithSignature(sig, id, lot, bid));
     }
-    function try_deal(uint id)
+    function try_deal(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "deal(uint256)";
         (ok,) = address(flop).call(abi.encodeWithSignature(sig, id));
     }
-    function try_tick(uint id)
+    function try_tick(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "tick(uint256)";
@@ -46,15 +46,15 @@ contract Guy {
 }
 
 contract Gal {
-    uint public Ash;
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    uint256 public Ash;
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "Gal/sub-underflow");
     }
-    function kick(Flopper flop, uint lot, uint bid) external returns (uint) {
+    function kick(Flopper flop, uint256 lot, uint256 bid) external returns (uint256) {
         Ash += bid;
         return flop.kick(address(this), lot, bid);
     }
-    function kiss(uint rad) external {
+    function kiss(uint256 rad) external {
         Ash = sub(Ash, rad);
     }
     function cage(Flopper flop) external {
@@ -63,11 +63,11 @@ contract Gal {
 }
 
 contract Vatish is DSToken('') {
-    uint constant ONE = 10 ** 27;
+    uint256 constant ONE = 10 ** 27;
     function hope(address usr) public {
-         approve(usr, uint(-1));
+         approve(usr, uint256(-1));
     }
-    function dai(address usr) public view returns (uint) {
+    function dai(address usr) public view returns (uint256) {
          return balanceOf[usr];
     }
 }
@@ -83,7 +83,7 @@ contract FlopTest is DSTest {
     address bob;
     address gal;
 
-    function kiss(uint) public pure { }  // arbitrary callback
+    function kiss(uint256) public pure { }  // arbitrary callback
 
     function setUp() public {
         hevm = Hevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
@@ -114,7 +114,7 @@ contract FlopTest is DSTest {
     function test_kick() public {
         assertEq(vat.dai(gal), 0);
         assertEq(gem.balanceOf(gal), 0 ether);
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 5000 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 5000 ether);
         // no value transferred
         assertEq(vat.dai(gal), 0);
         assertEq(gem.balanceOf(gal), 0 ether);
@@ -129,7 +129,7 @@ contract FlopTest is DSTest {
     }
 
     function test_dent() public {
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
 
         Guy(ali).dent(id, 100 ether, 10 ether);
         // bid taken from bidder
@@ -157,7 +157,7 @@ contract FlopTest is DSTest {
     }
 
     function test_dent_Ash_less_than_bid() public {
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
         assertEq(vat.dai(gal),  0 ether);
 
         Gal(gal).kiss(1 ether);
@@ -189,7 +189,7 @@ contract FlopTest is DSTest {
     }
 
     function test_dent_same_bidder() public {
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 200 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 200 ether);
 
         Guy(ali).dent(id, 100 ether, 200 ether);
         assertEq(vat.dai(ali), 0);
@@ -198,7 +198,7 @@ contract FlopTest is DSTest {
 
     function test_tick() public {
         // start an auction
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
         // check no tick
         assertTrue(!Guy(ali).try_tick(id));
         // run past the end
@@ -207,7 +207,7 @@ contract FlopTest is DSTest {
         assertTrue(!Guy(ali).try_dent(id, 100 ether, 10 ether));
         assertTrue( Guy(ali).try_tick(id));
         // check biddable
-        (, uint _lot,,,) = flop.bids(id);
+        (, uint256 _lot,,,) = flop.bids(id);
         // tick should increase the lot by pad (50%) and restart the auction
         assertEq(_lot, 300 ether);
         assertTrue( Guy(ali).try_dent(id, 100 ether, 10 ether));
@@ -216,7 +216,7 @@ contract FlopTest is DSTest {
     function test_no_deal_after_end() public {
         // if there are no bids and the auction ends, then it should not
         // be refundable to the creator. Rather, it ticks indefinitely.
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
         assertTrue(!Guy(ali).try_deal(id));
         hevm.warp(now + 2 weeks);
         assertTrue(!Guy(ali).try_deal(id));
@@ -228,7 +228,7 @@ contract FlopTest is DSTest {
         // yanking the auction should refund the last bidder's dai, credit a
         // corresponding amount of sin to the caller of cage, and delete the auction.
         // in practice, gal == (caller of cage) == (vow address)
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
 
         // confrim initial state expectations
         assertEq(vat.dai(ali), 200 ether);
@@ -265,7 +265,7 @@ contract FlopTest is DSTest {
         // with no bidder to refund, yanking the auction should simply create equal
         // amounts of dai (credited to the gal) and sin (credited to the caller of cage)
         // in practice, gal == (caller of cage) == (vow address)
-        uint id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
+        uint256 id = Gal(gal).kick(flop, /*lot*/ 200 ether, /*bid*/ 10 ether);
 
         // confrim initial state expectations
         assertEq(vat.dai(ali), 200 ether);

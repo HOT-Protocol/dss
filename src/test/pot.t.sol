@@ -20,10 +20,10 @@ contract DSRTest is DSTest {
     address self;
     address potb;
 
-    function rad(uint wad_) internal pure returns (uint) {
+    function rad(uint256 wad_) internal pure returns (uint256) {
         return wad_ * 10 ** 27;
     }
-    function wad(uint rad_) internal pure returns (uint) {
+    function wad(uint256 rad_) internal pure returns (uint256) {
         return rad_ / 10 ** 27;
     }
 
@@ -57,7 +57,7 @@ contract DSRTest is DSTest {
     }
     function test_save_1d() public {
         pot.join(100 ether);
-        pot.file("dsr", uint(1000000564701133626865910626));  // 5% / day
+        pot.file("dsr", uint256(1000000564701133626865910626));  // 5% / day
         hevm.warp(now + 1 days);
         pot.drip();
         assertEq(pot.pie(self), 100 ether);
@@ -66,11 +66,11 @@ contract DSRTest is DSTest {
     }
     function test_drip_multi() public {
         pot.join(100 ether);
-        pot.file("dsr", uint(1000000564701133626865910626));  // 5% / day
+        pot.file("dsr", uint256(1000000564701133626865910626));  // 5% / day
         hevm.warp(now + 1 days);
         pot.drip();
         assertEq(wad(vat.dai(potb)),   105 ether);
-        pot.file("dsr", uint(1000001103127689513476993127));  // 10% / day
+        pot.file("dsr", uint256(1000001103127689513476993127));  // 10% / day
         hevm.warp(now + 1 days);
         pot.drip();
         assertEq(wad(vat.sin(vow)), 15.5 ether);
@@ -80,7 +80,7 @@ contract DSRTest is DSTest {
     }
     function test_drip_multi_inBlock() public {
         pot.drip();
-        uint rho = pot.rho();
+        uint256 rho = pot.rho();
         assertEq(rho, now);
         hevm.warp(now + 1 days);
         rho = pot.rho();
@@ -94,14 +94,14 @@ contract DSRTest is DSTest {
     }
     function test_save_multi() public {
         pot.join(100 ether);
-        pot.file("dsr", uint(1000000564701133626865910626));  // 5% / day
+        pot.file("dsr", uint256(1000000564701133626865910626));  // 5% / day
         hevm.warp(now + 1 days);
         pot.drip();
         pot.exit(50 ether);
         assertEq(wad(vat.dai(self)), 52.5 ether);
         assertEq(pot.Pie(),          50.0 ether);
 
-        pot.file("dsr", uint(1000001103127689513476993127));  // 10% / day
+        pot.file("dsr", uint256(1000001103127689513476993127));  // 10% / day
         hevm.warp(now + 1 days);
         pot.drip();
         pot.exit(50 ether);
@@ -109,7 +109,7 @@ contract DSRTest is DSTest {
         assertEq(pot.Pie(),            0.00 ether);
     }
     function test_fresh_chi() public {
-        uint rho = pot.rho();
+        uint256 rho = pot.rho();
         assertEq(rho, now);
         hevm.warp(now + 1 days);
         assertEq(rho, now - 1 days);
@@ -121,7 +121,7 @@ contract DSRTest is DSTest {
         assertEq(wad(vat.dai(self)), 100 ether);
     }
     function testFail_stale_chi() public {
-        pot.file("dsr", uint(1000000564701133626865910626));  // 5% / day
+        pot.file("dsr", uint256(1000000564701133626865910626));  // 5% / day
         pot.drip();
         hevm.warp(now + 1 days);
         pot.join(100 ether);
@@ -129,10 +129,10 @@ contract DSRTest is DSTest {
     function test_file() public {
         hevm.warp(now + 1);
         pot.drip();
-        pot.file("dsr", uint(1));
+        pot.file("dsr", uint256(1));
     }
     function testFail_file() public {
         hevm.warp(now + 1);
-        pot.file("dsr", uint(1));
+        pot.file("dsr", uint256(1));
     }
 }

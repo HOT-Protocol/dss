@@ -47,7 +47,7 @@ interface VatLike {
 
 contract Pot is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address guy) external note auth { wards[guy] = 1; }
     function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
@@ -80,7 +80,7 @@ contract Pot is LibNote {
 
     // --- Math ---
     uint256 constant ONE = 10 ** 27;
-    function rpow(uint x, uint n, uint base) internal pure returns (uint z) {
+    function rpow(uint256 x, uint256 n, uint256 base) internal pure returns (uint256 z) {
         assembly {
             switch x case 0 {switch n case 0 {z := base} default {z := 0}}
             default {
@@ -104,19 +104,19 @@ contract Pot is LibNote {
         }
     }
 
-    function rmul(uint x, uint y) internal pure returns (uint z) {
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = mul(x, y) / ONE;
     }
 
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "Pot/add-overflow");
     }
 
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "Pot/sub-underflow");
     }
 
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "Pot/mul-overflow");
     }
 
@@ -139,24 +139,24 @@ contract Pot is LibNote {
     }
 
     // --- Savings Rate Accumulation ---
-    function drip() external note returns (uint tmp) {
+    function drip() external note returns (uint256 tmp) {
         require(now >= rho, "Pot/invalid-now");
         tmp = rmul(rpow(dsr, now - rho, ONE), chi);
-        uint chi_ = sub(tmp, chi);
+        uint256 chi_ = sub(tmp, chi);
         chi = tmp;
         rho = now;
         vat.suck(address(vow), address(this), mul(Pie, chi_));
     }
 
     // --- Savings Dai Management ---
-    function join(uint wad) external note {
+    function join(uint256 wad) external note {
         require(now == rho, "Pot/rho-not-updated");
         pie[msg.sender] = add(pie[msg.sender], wad);
         Pie             = add(Pie,             wad);
         vat.move(msg.sender, address(this), mul(chi, wad));
     }
 
-    function exit(uint wad) external note {
+    function exit(uint256 wad) external note {
         pie[msg.sender] = sub(pie[msg.sender], wad);
         Pie             = sub(Pie,             wad);
         vat.move(address(this), msg.sender, mul(chi, wad));

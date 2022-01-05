@@ -22,15 +22,15 @@ pragma solidity 0.5.15;
 import "./lib.sol";
 
 interface VatLike {
-    function move(address,address,uint) external;
-    function suck(address,address,uint) external;
+    function move(address,address,uint256) external;
+    function suck(address,address,uint256) external;
 }
 interface GemLike {
-    function mint(address,uint) external;
+    function mint(address,uint256) external;
 }
 interface VowLike {
-    function Ash() external returns (uint);
-    function kiss(uint) external;
+    function Ash() external returns (uint256);
+    function kiss(uint256) external;
 }
 
 /*
@@ -46,7 +46,7 @@ interface VowLike {
 
 contract Flopper is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { wards[usr] = 1; }
     function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
@@ -63,7 +63,7 @@ contract Flopper is LibNote {
         uint48  end;  // auction expiry time     [unix epoch time]
     }
 
-    mapping (uint => Bid) public bids;
+    mapping (uint256 => Bid) public bids;
 
     VatLike  public   vat;  // CDP Engine
     GemLike  public   gem;
@@ -97,15 +97,15 @@ contract Flopper is LibNote {
     function add(uint48 x, uint48 y) internal pure returns (uint48 z) {
         require((z = x + y) >= x, "Flopper/add-overflow");
     }
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "Flopper/mul-overflow");
     }
-    function min(uint x, uint y) internal pure returns (uint z) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         if (x > y) { z = y; } else { z = x; }
     }
 
     // --- Admin ---
-    function file(bytes32 what, uint data) external note auth {
+    function file(bytes32 what, uint256 data) external note auth {
         if (what == "beg") beg = data;
         else if (what == "pad") pad = data;
         else if (what == "ttl") ttl = uint48(data);
@@ -114,9 +114,9 @@ contract Flopper is LibNote {
     }
 
     // --- Auction ---
-    function kick(address gal, uint lot, uint bid) external auth returns (uint id) {
+    function kick(address gal, uint256 lot, uint256 bid) external auth returns (uint256 id) {
         require(live == 1, "Flopper/not-live");
-        require(kicks < uint(-1), "Flopper/overflow");
+        require(kicks < uint256(-1), "Flopper/overflow");
         id = ++kicks;
 
         bids[id].bid = bid;
@@ -126,7 +126,7 @@ contract Flopper is LibNote {
 
         emit Kick(id, lot, bid, gal);
     }
-    function tick(uint id) external note {
+    function tick(uint256 id) external note {
         require(live == 1, "Flopper/not-live");
         require(bids[id].guy != address(0), "Flopper/guy-not-set");
         require(bids[id].end < now, "Flopper/not-finished");
@@ -134,7 +134,7 @@ contract Flopper is LibNote {
         bids[id].lot = mul(pad, bids[id].lot) / ONE;
         bids[id].end = add(uint48(now), tau);
     }
-    function dent(uint id, uint lot, uint bid) external note {
+    function dent(uint256 id, uint256 lot, uint256 bid) external note {
         require(live == 1, "Flopper/not-live");
         require(bids[id].guy != address(0), "Flopper/guy-not-set");
         require(bids[id].tic > now || bids[id].tic == 0, "Flopper/already-finished-tic");
@@ -149,7 +149,7 @@ contract Flopper is LibNote {
 
             // on first dent, clear as much Ash as possible
             if (bids[id].tic == 0) {
-                uint Ash = VowLike(bids[id].guy).Ash();
+                uint256 Ash = VowLike(bids[id].guy).Ash();
                 VowLike(bids[id].guy).kiss(min(bid, Ash));
             }
 
@@ -159,7 +159,7 @@ contract Flopper is LibNote {
         bids[id].lot = lot;
         bids[id].tic = add(uint48(now), ttl);
     }
-    function deal(uint id) external note {
+    function deal(uint256 id) external note {
         require(live == 1, "Flopper/not-live");
         require(bids[id].tic != 0 && (bids[id].tic < now || bids[id].end < now), "Flopper/not-finished");
         gem.mint(bids[id].guy, bids[id].lot);
@@ -171,7 +171,7 @@ contract Flopper is LibNote {
        live = 0;
        vow = msg.sender;
     }
-    function yank(uint id) external note {
+    function yank(uint256 id) external note {
         require(live == 0, "Flopper/still-live");
         require(bids[id].guy != address(0), "Flopper/guy-not-set");
         vat.suck(vow, bids[id].guy, bids[id].bid);

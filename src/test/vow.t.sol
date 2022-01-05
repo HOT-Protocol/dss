@@ -15,7 +15,7 @@ interface Hevm {
 
 contract Gem {
     mapping (address => uint256) public balanceOf;
-    function mint(address usr, uint rad) public {
+    function mint(address usr, uint256 rad) public {
         balanceOf[usr] += rad;
     }
 }
@@ -50,11 +50,11 @@ contract VowTest is DSTest {
         vat.hope(address(flop));
     }
 
-    function try_flog(uint era) internal returns (bool ok) {
+    function try_flog(uint256 era) internal returns (bool ok) {
         string memory sig = "flog(uint256)";
         (ok,) = address(vow).call(abi.encodeWithSignature(sig, era));
     }
-    function try_dent(uint id, uint lot, uint bid) internal returns (bool ok) {
+    function try_dent(uint256 id, uint256 lot, uint256 bid) internal returns (bool ok) {
         string memory sig = "dent(uint256,uint256,uint256)";
         (ok,) = address(flop).call(abi.encodeWithSignature(sig, id, lot, bid));
     }
@@ -89,21 +89,21 @@ contract VowTest is DSTest {
         if (ok) return true;
     }
 
-    uint constant ONE = 10 ** 27;
-    function rad(uint wad) internal pure returns (uint) {
+    uint256 constant ONE = 10 ** 27;
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * ONE;
     }
 
-    function suck(address who, uint wad) internal {
+    function suck(address who, uint256 wad) internal {
         vow.fess(rad(wad));
         vat.init('');
         vat.suck(address(vow), who, rad(wad));
     }
-    function flog(uint wad) internal {
+    function flog(uint256 wad) internal {
         suck(address(0), wad);  // suck dai into the zero address
         vow.flog(now);
     }
-    function heal(uint wad) internal {
+    function heal(uint256 wad) internal {
         vow.heal(rad(wad));
     }
 
@@ -129,10 +129,10 @@ contract VowTest is DSTest {
 
     function test_flog_wait() public {
         assertEq(vow.wait(), 0);
-        vow.file('wait', uint(100 seconds));
+        vow.file('wait', uint256(100 seconds));
         assertEq(vow.wait(), 100 seconds);
 
-        uint tic = now;                                                                                                                                                       
+        uint256 tic = now;                                                                                                                                                       
         vow.fess(100 ether);                                                     
         hevm.warp(tic + 99 seconds);                                             
         assertTrue(!try_flog(tic) );                                             
@@ -185,7 +185,7 @@ contract VowTest is DSTest {
     }
     function test_no_flap_pending_heal() public {
         flog(100 ether);
-        uint id = vow.flop();
+        uint256 id = vow.flop();
 
         vat.mint(address(this), 100 ether);
         flop.dent(id, 0 ether, rad(100 ether));
@@ -195,7 +195,7 @@ contract VowTest is DSTest {
 
     function test_no_surplus_after_good_flop() public {
         flog(100 ether);
-        uint id = vow.flop();
+        uint256 id = vow.flop();
         vat.mint(address(this), 100 ether);
 
         flop.dent(id, 0 ether, rad(100 ether));  // flop succeeds..
@@ -205,7 +205,7 @@ contract VowTest is DSTest {
 
     function test_multiple_flop_dents() public {
         flog(100 ether);
-        uint id = vow.flop();
+        uint256 id = vow.flop();
 
         vat.mint(address(this), 100 ether);
         assertTrue(try_dent(id, 2 ether,  rad(100 ether)));

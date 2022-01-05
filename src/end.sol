@@ -58,7 +58,7 @@ interface VowLike {
     function cage() external;
 }
 interface Flippy {
-    function bids(uint id) external view returns (
+    function bids(uint256 id) external view returns (
         uint256 bid,   // [rad]
         uint256 lot,   // [wad]
         address guy,
@@ -68,7 +68,7 @@ interface Flippy {
         address gal,
         uint256 tab    // [rad]
     );
-    function yank(uint id) external;
+    function yank(uint256 id) external;
 }
 
 interface PipLike {
@@ -186,7 +186,7 @@ interface Spotty {
 
 contract End is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address guy) external note auth { wards[guy] = 1; }
     function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
@@ -221,28 +221,28 @@ contract End is LibNote {
     }
 
     // --- Math ---
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         require(z >= x, "End/add-overflow");
     }
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "End/sub-underflow");
     }
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "End/mul-overflow");
     }
-    function min(uint x, uint y) internal pure returns (uint z) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         return x <= y ? x : y;
     }
-    uint constant WAD = 10 ** 18;
-    uint constant RAY = 10 ** 27;
-    function rmul(uint x, uint y) internal pure returns (uint z) {
+    uint256 constant WAD = 10 ** 18;
+    uint256 constant RAY = 10 ** 27;
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = mul(x, y) / RAY;
     }
-    function rdiv(uint x, uint y) internal pure returns (uint z) {
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = mul(x, RAY) / y;
     }
-    function wdiv(uint x, uint y) internal pure returns (uint z) {
+    function wdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = mul(x, WAD) / y;
     }
 
@@ -280,7 +280,7 @@ contract End is LibNote {
         (Art[ilk],,,,) = vat.ilks(ilk);
         (PipLike pip,) = spot.ilks(ilk);
         // par is a ray, pip returns a wad
-        tag[ilk] = wdiv(spot.par(), uint(pip.read()));
+        tag[ilk] = wdiv(spot.par(), uint256(pip.read()));
     }
 
     function skip(bytes32 ilk, uint256 id) external note {
@@ -288,39 +288,39 @@ contract End is LibNote {
 
         (address flipV,,) = cat.ilks(ilk);
         Flippy flip = Flippy(flipV);
-        (, uint rate,,,) = vat.ilks(ilk);
-        (uint bid, uint lot,,,, address usr,, uint tab) = flip.bids(id);
+        (, uint256 rate,,,) = vat.ilks(ilk);
+        (uint256 bid, uint256 lot,,,, address usr,, uint256 tab) = flip.bids(id);
 
         vat.suck(address(vow), address(vow),  tab);
         vat.suck(address(vow), address(this), bid);
         vat.hope(address(flip));
         flip.yank(id);
 
-        uint art = tab / rate;
+        uint256 art = tab / rate;
         Art[ilk] = add(Art[ilk], art);
-        require(int(lot) >= 0 && int(art) >= 0, "End/overflow");
-        vat.grab(ilk, usr, address(this), address(vow), int(lot), int(art));
+        require(int256(lot) >= 0 && int256(art) >= 0, "End/overflow");
+        vat.grab(ilk, usr, address(this), address(vow), int256(lot), int256(art));
     }
 
     function skim(bytes32 ilk, address urn) external note {
         require(tag[ilk] != 0, "End/tag-ilk-not-defined");
-        (, uint rate,,,) = vat.ilks(ilk);
-        (uint ink, uint art) = vat.urns(ilk, urn);
+        (, uint256 rate,,,) = vat.ilks(ilk);
+        (uint256 ink, uint256 art) = vat.urns(ilk, urn);
 
-        uint owe = rmul(rmul(art, rate), tag[ilk]);
-        uint wad = min(ink, owe);
+        uint256 owe = rmul(rmul(art, rate), tag[ilk]);
+        uint256 wad = min(ink, owe);
         gap[ilk] = add(gap[ilk], sub(owe, wad));
 
         require(wad <= 2**255 && art <= 2**255, "End/overflow");
-        vat.grab(ilk, urn, address(this), address(vow), -int(wad), -int(art));
+        vat.grab(ilk, urn, address(this), address(vow), -int256(wad), -int256(art));
     }
 
     function free(bytes32 ilk) external note {
         require(live == 0, "End/still-live");
-        (uint ink, uint art) = vat.urns(ilk, msg.sender);
+        (uint256 ink, uint256 art) = vat.urns(ilk, msg.sender);
         require(art == 0, "End/art-not-zero");
         require(ink <= 2**255, "End/overflow");
-        vat.grab(ilk, msg.sender, msg.sender, address(vow), -int(ink), 0);
+        vat.grab(ilk, msg.sender, msg.sender, address(vow), -int256(ink), 0);
     }
 
     function thaw() external note {
@@ -334,7 +334,7 @@ contract End is LibNote {
         require(debt != 0, "End/debt-zero");
         require(fix[ilk] == 0, "End/fix-ilk-already-defined");
 
-        (, uint rate,,,) = vat.ilks(ilk);
+        (, uint256 rate,,,) = vat.ilks(ilk);
         uint256 wad = rmul(rmul(Art[ilk], rate), tag[ilk]);
         fix[ilk] = rdiv(mul(sub(wad, gap[ilk]), RAY), debt);
     }
@@ -344,7 +344,7 @@ contract End is LibNote {
         vat.move(msg.sender, address(vow), mul(wad, RAY));
         bag[msg.sender] = add(bag[msg.sender], wad);
     }
-    function cash(bytes32 ilk, uint wad) external note {
+    function cash(bytes32 ilk, uint256 wad) external note {
         require(fix[ilk] != 0, "End/fix-ilk-not-defined");
         vat.flux(ilk, address(this), msg.sender, rmul(wad, fix[ilk]));
         out[ilk][msg.sender] = add(out[ilk][msg.sender], wad);

@@ -22,20 +22,20 @@ pragma solidity 0.5.15;
 import "./lib.sol";
 
 interface FlopLike {
-    function kick(address gal, uint lot, uint bid) external returns (uint);
+    function kick(address gal, uint256 lot, uint256 bid) external returns (uint256);
     function cage() external;
-    function live() external returns (uint);
+    function live() external returns (uint256);
 }
 
 interface FlapLike {
-    function kick(uint lot, uint bid) external returns (uint);
-    function cage(uint) external;
-    function live() external returns (uint);
+    function kick(uint256 lot, uint256 bid) external returns (uint256);
+    function cage(uint256) external;
+    function live() external returns (uint256);
 }
 
 interface VatLike {
-    function dai (address) external view returns (uint);
-    function sin (address) external view returns (uint);
+    function dai (address) external view returns (uint256);
+    function sin (address) external view returns (uint256);
     function heal(uint256) external;
     function hope(address) external;
     function nope(address) external;
@@ -43,7 +43,7 @@ interface VatLike {
 
 contract Vow is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { require(live == 1, "Vow/not-live"); wards[usr] = 1; }
     function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
@@ -80,18 +80,18 @@ contract Vow is LibNote {
     }
 
     // --- Math ---
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "Vow/add-overflow");
     }
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "Vow/sub-underflow");
     }
-    function min(uint x, uint y) internal pure returns (uint z) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         return x <= y ? x : y;
     }
 
     // --- Administration ---
-    function file(bytes32 what, uint data) external note auth {
+    function file(bytes32 what, uint256 data) external note auth {
         if (what == "wait") wait = data;
         else if (what == "bump") bump = data;
         else if (what == "sump") sump = data;
@@ -111,24 +111,24 @@ contract Vow is LibNote {
     }
 
     // Push to debt-queue
-    function fess(uint tab) external note auth {
+    function fess(uint256 tab) external note auth {
         sin[now] = add(sin[now], tab);
         Sin = add(Sin, tab);
     }
     // Pop from debt-queue
-    function flog(uint era) external note {
+    function flog(uint256 era) external note {
         require(add(era, wait) <= now, "Vow/wait-not-finished");
         Sin = sub(Sin, sin[era]);
         sin[era] = 0;
     }
 
     // Debt settlement
-    function heal(uint rad) external note {
+    function heal(uint256 rad) external note {
         require(rad <= vat.dai(address(this)), "Vow/insufficient-surplus");
         require(rad <= sub(sub(vat.sin(address(this)), Sin), Ash), "Vow/insufficient-debt");
         vat.heal(rad);
     }
-    function kiss(uint rad) external note {
+    function kiss(uint256 rad) external note {
         require(rad <= Ash, "Vow/not-enough-ash");
         require(rad <= vat.dai(address(this)), "Vow/insufficient-surplus");
         Ash = sub(Ash, rad);
@@ -136,14 +136,14 @@ contract Vow is LibNote {
     }
 
     // Debt auction
-    function flop() external note returns (uint id) {
+    function flop() external note returns (uint256 id) {
         require(sump <= sub(sub(vat.sin(address(this)), Sin), Ash), "Vow/insufficient-debt");
         require(vat.dai(address(this)) == 0, "Vow/surplus-not-zero");
         Ash = add(Ash, sump);
         id = flopper.kick(address(this), dump, sump);
     }
     // Surplus auction
-    function flap() external note returns (uint id) {
+    function flap() external note returns (uint256 id) {
         require(vat.dai(address(this)) >= add(add(vat.sin(address(this)), bump), hump), "Vow/insufficient-surplus");
         require(sub(sub(vat.sin(address(this)), Sin), Ash) == 0, "Vow/debt-not-zero");
         id = flapper.kick(bump, 0);

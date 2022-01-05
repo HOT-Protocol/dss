@@ -23,7 +23,7 @@ interface Hevm {
 
 contract TestVat is Vat {
     uint256 constant ONE = 10 ** 27;
-    function mint(address usr, uint wad) public {
+    function mint(address usr, uint256 wad) public {
         dai[usr] += wad * ONE;
         debt += wad * ONE;
     }
@@ -33,15 +33,15 @@ contract TestVow is Vow {
     constructor(address vat, address flapper, address flopper)
         public Vow(vat, flapper, flopper) {}
     // Total deficit
-    function Awe() public view returns (uint) {
+    function Awe() public view returns (uint256) {
         return vat.sin(address(this));
     }
     // Total surplus
-    function Joy() public view returns (uint) {
+    function Joy() public view returns (uint256) {
         return vat.dai(address(this));
     }
     // Unqueued, pre-auction debt
-    function Woe() public view returns (uint) {
+    function Woe() public view returns (uint256) {
         return sub(sub(Awe(), Sin), Ash);
     }
 }
@@ -61,7 +61,7 @@ contract Usr {
             revert(free, 32)
         }
     }
-    function can_frob(bytes32 ilk, address u, address v, address w, int dink, int dart) public returns (bool) {
+    function can_frob(bytes32 ilk, address u, address v, address w, int256 dink, int256 dart) public returns (bool) {
         string memory sig = "frob(bytes32,address,address,address,int256,int256)";
         bytes memory data = abi.encodeWithSignature(sig, ilk, u, v, w, dink, dart);
 
@@ -71,7 +71,7 @@ contract Usr {
         ok = abi.decode(success, (bool));
         if (ok) return true;
     }
-    function can_fork(bytes32 ilk, address src, address dst, int dink, int dart) public returns (bool) {
+    function can_fork(bytes32 ilk, address src, address dst, int256 dink, int256 dart) public returns (bool) {
         string memory sig = "fork(bytes32,address,address,int256,int256)";
         bytes memory data = abi.encodeWithSignature(sig, ilk, src, dst, dink, dart);
 
@@ -81,10 +81,10 @@ contract Usr {
         ok = abi.decode(success, (bool));
         if (ok) return true;
     }
-    function frob(bytes32 ilk, address u, address v, address w, int dink, int dart) public {
+    function frob(bytes32 ilk, address u, address v, address w, int256 dink, int256 dart) public {
         vat.frob(ilk, u, v, w, dink, dart);
     }
-    function fork(bytes32 ilk, address src, address dst, int dink, int dart) public {
+    function fork(bytes32 ilk, address src, address dst, int256 dink, int256 dart) public {
         vat.fork(ilk, src, dst, dink, dart);
     }
     function hope(address usr) public {
@@ -101,13 +101,13 @@ contract FrobTest is DSTest {
     GemJoin gemA;
     address me;
 
-    function try_frob(bytes32 ilk, int ink, int art) public returns (bool ok) {
+    function try_frob(bytes32 ilk, int256 ink, int256 art) public returns (bool ok) {
         string memory sig = "frob(bytes32,address,address,address,int256,int256)";
         address self = address(this);
         (ok,) = address(vat).call(abi.encodeWithSignature(sig, ilk, self, self, self, ink, art));
     }
 
-    function ray(uint wad) internal pure returns (uint) {
+    function ray(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 9;
     }
 
@@ -138,15 +138,15 @@ contract FrobTest is DSTest {
         me = address(this);
     }
 
-    function gem(bytes32 ilk, address urn) internal view returns (uint) {
+    function gem(bytes32 ilk, address urn) internal view returns (uint256) {
         return vat.gem(ilk, urn);
     }
-    function ink(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); art_;
+    function ink(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); art_;
         return ink_;
     }
-    function art(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); ink_;
+    function art(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); ink_;
         return art_;
     }
 
@@ -228,7 +228,7 @@ contract FrobTest is DSTest {
         assertTrue( this.try_frob("gold",  5 ether, 1 ether));
     }
 
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
     function test_alt_callers() public {
@@ -240,9 +240,9 @@ contract FrobTest is DSTest {
         address b = address(bob);
         address c = address(che);
 
-        vat.slip("gold", a, int(rad(20 ether)));
-        vat.slip("gold", b, int(rad(20 ether)));
-        vat.slip("gold", c, int(rad(20 ether)));
+        vat.slip("gold", a, int256(rad(20 ether)));
+        vat.slip("gold", b, int256(rad(20 ether)));
+        vat.slip("gold", c, int256(rad(20 ether)));
 
         ali.frob("gold", a, a, a, 10 ether, 5 ether);
 
@@ -293,9 +293,9 @@ contract FrobTest is DSTest {
         address b = address(bob);
         address c = address(che);
 
-        vat.slip("gold", a, int(rad(20 ether)));
-        vat.slip("gold", b, int(rad(20 ether)));
-        vat.slip("gold", c, int(rad(20 ether)));
+        vat.slip("gold", a, int256(rad(20 ether)));
+        vat.slip("gold", b, int256(rad(20 ether)));
+        vat.slip("gold", c, int256(rad(20 ether)));
 
         ali.frob("gold", a, a, a, 10 ether, 5 ether);
 
@@ -349,11 +349,11 @@ contract JoinTest is DSTest {
         string memory sig = "cage()";
         (ok,) = a.call(abi.encodeWithSignature(sig));
     }
-    function try_join_gem(address usr, uint wad) public returns (bool ok) {
+    function try_join_gem(address usr, uint256 wad) public returns (bool ok) {
         string memory sig = "join(address,uint256)";
         (ok,) = address(gemA).call(abi.encodeWithSignature(sig, usr, wad));
     }
-    function try_exit_dai(address usr, uint wad) public returns (bool ok) {
+    function try_exit_dai(address usr, uint256 wad) public returns (bool ok) {
         string memory sig = "exit(address,uint256)";
         (ok,) = address(daiA).call(abi.encodeWithSignature(sig, usr, wad));
     }
@@ -366,7 +366,7 @@ contract JoinTest is DSTest {
         assertTrue(!try_join_gem(address(this), 10 ether));
         assertEq(vat.gem("gem", me), 10 ether);
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
     function test_dai_exit() public {
@@ -386,7 +386,7 @@ contract JoinTest is DSTest {
         vat.mint(address(this), 100 ether);
         vat.hope(address(daiA));
         daiA.exit(urn, 60 ether);
-        dai.approve(address(daiA), uint(-1));
+        dai.approve(address(daiA), uint256(-1));
         daiA.join(urn, 30 ether);
         assertEq(dai.balanceOf(address(this)),     30 ether);
         assertEq(vat.dai(me),                  rad(70 ether));
@@ -410,7 +410,7 @@ interface FlipLike {
         address gal;
         uint256 tab;
     }
-    function bids(uint) external view returns (
+    function bids(uint256) external view returns (
         uint256 bid,
         uint256 lot,
         address guy,
@@ -446,28 +446,28 @@ contract BiteTest is DSTest {
     uint256 constant RAY = 10 ** 27;
     uint256 constant RAD = 10 ** 45;
 
-    function try_frob(bytes32 ilk, int ink, int art) public returns (bool ok) {
+    function try_frob(bytes32 ilk, int256 ink, int256 art) public returns (bool ok) {
         string memory sig = "frob(bytes32,address,address,address,int256,int256)";
         address self = address(this);
         (ok,) = address(vat).call(abi.encodeWithSignature(sig, ilk, self, self, self, ink, art));
     }
 
-    function ray(uint wad) internal pure returns (uint) {
+    function ray(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 9;
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
 
-    function gem(bytes32 ilk, address urn) internal view returns (uint) {
+    function gem(bytes32 ilk, address urn) internal view returns (uint256) {
         return vat.gem(ilk, urn);
     }
-    function ink(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); art_;
+    function ink(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); art_;
         return ink_;
     }
-    function art(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); ink_;
+    function art(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); ink_;
         return art_;
     }
 
@@ -551,14 +551,14 @@ contract BiteTest is DSTest {
         cat.file("gold", "dunk", rad(111 ether));
         cat.file("gold", "chop", 1.1 ether);
 
-        uint auction = cat.bite("gold", address(this));
+        uint256 auction = cat.bite("gold", address(this));
         // the full CDP is liquidated
         assertEq(ink("gold", address(this)), 0);
         assertEq(art("gold", address(this)), 0);
         // all debt goes to the vow
         assertEq(vow.Awe(), rad(100 ether));
         // auction is for all collateral
-        (, uint lot,,,,,, uint tab) = flip.bids(auction);
+        (, uint256 lot,,,,,, uint256 tab) = flip.bids(auction);
         assertEq(lot,        40 ether);
         assertEq(tab,   rad(110 ether));
     }
@@ -571,14 +571,14 @@ contract BiteTest is DSTest {
         cat.file("gold", "chop", 1.1 ether);
         cat.file("gold", "dunk", rad(82.5 ether));
 
-        uint auction = cat.bite("gold", address(this));
+        uint256 auction = cat.bite("gold", address(this));
         // the CDP is partially liquidated
         assertEq(ink("gold", address(this)), 10 ether);
         assertEq(art("gold", address(this)), 25 ether);
         // a fraction of the debt goes to the vow
         assertEq(vow.Awe(), rad(75 ether));
         // auction is for a fraction of the collateral
-        (, uint lot,,,,,, uint tab) = FlipLike(address(flip)).bids(auction);
+        (, uint256 lot,,,,,, uint256 tab) = FlipLike(address(flip)).bids(auction);
         assertEq(lot,       30 ether);
         assertEq(tab,   rad(82.5 ether));
     }
@@ -600,7 +600,7 @@ contract BiteTest is DSTest {
 
         cat.file("gold", "dunk", rad(200 ether));  // => bite everything
         assertEq(cat.litter(), 0);
-        uint auction = cat.bite("gold", address(this));
+        uint256 auction = cat.bite("gold", address(this));
         assertEq(cat.litter(), rad(110 ether));
         assertEq(ink("gold", address(this)), 0);
         assertEq(art("gold", address(this)), 0);
@@ -645,7 +645,7 @@ contract BiteTest is DSTest {
         cat.file("gold", "dunk", rad(100 ether));
         assertEq(cat.box(), rad(75 ether));
         assertEq(cat.litter(), 0);
-        uint auction = cat.bite("gold", address(this));
+        uint256 auction = cat.bite("gold", address(this));
 
         assertEq(ink("gold", address(this)), 50 ether);
         assertEq(art("gold", address(this)), 75 ether);
@@ -698,16 +698,16 @@ contract BiteTest is DSTest {
         jug.file("gold", "duty", EIGHT_PCT);
         hevm.warp(now + 10 days);
         jug.drip("gold");
-        (, uint rate,,,) = vat.ilks("gold");
+        (, uint256 rate,,,) = vat.ilks("gold");
 
-        uint vowBalance = vat.dai(address(vow)); // Balance updates after vat.fold is called from jug
+        uint256 vowBalance = vat.dai(address(vow)); // Balance updates after vat.fold is called from jug
 
         cat.file("box", rad(75 ether));
         cat.file("gold", "dunk", rad(100 ether));
         assertEq(cat.box(), rad(75 ether));
         assertEq(cat.litter(), 0);
-        uint auction = cat.bite("gold", address(this));
-        (,,,,,,,uint tab) = flip.bids(auction);
+        uint256 auction = cat.bite("gold", address(this));
+        (,,,,,,,uint256 tab) = flip.bids(auction);
 
         assertTrue(cat.box() - cat.litter() < ray(1 ether)); // Rounding error to fill box
         assertEq(cat.litter(), tab);                         // tab = 74.9999... RAD
@@ -839,7 +839,7 @@ contract BiteTest is DSTest {
         cat.file("gold", "dunk", rad(100 ether));
         assertEq(cat.box(), rad(75 ether));
         assertEq(cat.litter(), 0);
-        uint auction = cat.bite("gold", address(this));
+        uint256 auction = cat.bite("gold", address(this));
         assertEq(cat.litter(), rad(75 ether));
         assertEq(ink("gold", address(this)), 50 ether);
         assertEq(art("gold", address(this)), 75 ether);
@@ -919,7 +919,7 @@ contract BiteTest is DSTest {
         cat.file("gold", "chop", 1.13 ether);
         cat.bite("gold", me);
         assertEq(cat.litter(), rad(1130 ether));
-        uint room = cat.box() - cat.litter();
+        uint256 room = cat.box() - cat.litter();
         assertEq(room, 1);
         (, uint256 rate,,,) = vat.ilks("gold");
         (, uint256 chop,) = cat.ilks("gold");
@@ -945,7 +945,7 @@ contract BiteTest is DSTest {
         cat.file("gold", "chop", 1.13 ether);
         cat.bite("gold", me);
         assertEq(cat.litter(), rad(113 ether));
-        uint room = cat.box() - cat.litter();
+        uint256 room = cat.box() - cat.litter();
         assertEq(room, 2);
         (, uint256 rate,,,) = vat.ilks("gold");
         (, uint256 chop,) = cat.ilks("gold");
@@ -1052,7 +1052,7 @@ contract BiteTest is DSTest {
 
         vow.file("sump", rad(10 ether));
         vow.file("dump", 2000 ether);
-        uint f1 = vow.flop();
+        uint256 f1 = vow.flop();
         assertEq(vow.Woe(),  rad(90 ether));
         assertEq(vow.Joy(),  rad( 0 ether));
         assertEq(vow.Ash(),  rad(10 ether));
@@ -1076,7 +1076,7 @@ contract BiteTest is DSTest {
 
         vow.file("bump", rad(100 ether));
         assertEq(vow.Awe(), 0 ether);
-        uint id = vow.flap();
+        uint256 id = vow.flap();
 
         assertEq(vat.dai(address(this)),     rad(0 ether));
         assertEq(gov.balanceOf(address(this)), 100 ether);
@@ -1092,20 +1092,20 @@ contract BiteTest is DSTest {
 contract FoldTest is DSTest {
     Vat vat;
 
-    function ray(uint wad) internal pure returns (uint) {
+    function ray(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 9;
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
-    function tab(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); ink_;
-        (uint Art_, uint rate, uint spot, uint line, uint dust) = vat.ilks(ilk);
+    function tab(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); ink_;
+        (uint256 Art_, uint256 rate, uint256 spot, uint256 line, uint256 dust) = vat.ilks(ilk);
         Art_; spot; line; dust;
         return art_ * rate;
     }
-    function jam(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); art_;
+    function jam(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); art_;
         return ink_;
     }
 
@@ -1115,13 +1115,13 @@ contract FoldTest is DSTest {
         vat.file("Line", rad(100 ether));
         vat.file("gold", "line", rad(100 ether));
     }
-    function draw(bytes32 ilk, uint dai) internal {
+    function draw(bytes32 ilk, uint256 dai) internal {
         vat.file("Line", rad(dai));
         vat.file(ilk, "line", rad(dai));
         vat.file(ilk, "spot", 10 ** 27 * 10000 ether);
         address self = address(this);
         vat.slip(ilk, self,  10 ** 27 * 1 ether);
-        vat.frob(ilk, self, self, self, int(1 ether), int(dai));
+        vat.frob(ilk, self, self, self, int256(1 ether), int256(dai));
     }
     function test_fold() public {
         address self = address(this);
@@ -1129,7 +1129,7 @@ contract FoldTest is DSTest {
         draw("gold", 1 ether);
 
         assertEq(tab("gold", self), rad(1.00 ether));
-        vat.fold("gold", ali,   int(ray(0.05 ether)));
+        vat.fold("gold", ali,   int256(ray(0.05 ether)));
         assertEq(tab("gold", self), rad(1.05 ether));
         assertEq(vat.dai(ali),      rad(0.05 ether));
     }

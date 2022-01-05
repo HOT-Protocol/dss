@@ -47,7 +47,7 @@ contract Usr {
         vat  = vat_;
         end  = end_;
     }
-    function frob(bytes32 ilk, address u, address v, address w, int dink, int dart) public {
+    function frob(bytes32 ilk, address u, address v, address w, int256 dink, int256 dart) public {
         vat.frob(ilk, u, v, w, dink, dart);
     }
     function flux(bytes32 ilk, address src, address dst, uint256 wad) public {
@@ -59,7 +59,7 @@ contract Usr {
     function hope(address usr) public {
         vat.hope(usr);
     }
-    function exit(GemJoin gemA, address usr, uint wad) public {
+    function exit(GemJoin gemA, address usr, uint256 wad) public {
         gemA.exit(usr, wad);
     }
     function free(bytes32 ilk) public {
@@ -68,7 +68,7 @@ contract Usr {
     function pack(uint256 rad) public {
         end.pack(rad);
     }
-    function cash(bytes32 ilk, uint wad) public {
+    function cash(bytes32 ilk, uint256 wad) public {
         end.cash(ilk, wad);
     }
 }
@@ -96,49 +96,49 @@ contract EndTest is DSTest {
     Flapper flap;
     Flopper flop;
 
-    uint constant WAD = 10 ** 18;
-    uint constant RAY = 10 ** 27;
-    uint constant MLN = 10 ** 6;
+    uint256 constant WAD = 10 ** 18;
+    uint256 constant RAY = 10 ** 27;
+    uint256 constant MLN = 10 ** 6;
 
-    function ray(uint wad) internal pure returns (uint) {
+    function ray(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 9;
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * RAY;
     }
-    function rmul(uint x, uint y) internal pure returns (uint z) {
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         require(y == 0 || z / y == x, "EndTest/mul-overflow");
         z = z / RAY;
     }
-    function min(uint x, uint y) internal pure returns (uint z) {
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         (x >= y) ? z = y : z = x;
     }
-    function dai(address urn) internal view returns (uint) {
+    function dai(address urn) internal view returns (uint256) {
         return vat.dai(urn) / RAY;
     }
-    function gem(bytes32 ilk, address urn) internal view returns (uint) {
+    function gem(bytes32 ilk, address urn) internal view returns (uint256) {
         return vat.gem(ilk, urn);
     }
-    function ink(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); art_;
+    function ink(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); art_;
         return ink_;
     }
-    function art(bytes32 ilk, address urn) internal view returns (uint) {
-        (uint ink_, uint art_) = vat.urns(ilk, urn); ink_;
+    function art(bytes32 ilk, address urn) internal view returns (uint256) {
+        (uint256 ink_, uint256 art_) = vat.urns(ilk, urn); ink_;
         return art_;
     }
-    function Art(bytes32 ilk) internal view returns (uint) {
-        (uint Art_, uint rate_, uint spot_, uint line_, uint dust_) = vat.ilks(ilk);
+    function Art(bytes32 ilk) internal view returns (uint256) {
+        (uint256 Art_, uint256 rate_, uint256 spot_, uint256 line_, uint256 dust_) = vat.ilks(ilk);
         rate_; spot_; line_; dust_;
         return Art_;
     }
-    function balanceOf(bytes32 ilk, address usr) internal view returns (uint) {
+    function balanceOf(bytes32 ilk, address usr) internal view returns (uint256) {
         return ilks[ilk].gem.balanceOf(usr);
     }
 
-    function try_pot_file(bytes32 what, uint data) public returns(bool ok) {
-        string memory sig = "file(bytes32, uint)";
+    function try_pot_file(bytes32 what, uint256 data) public returns(bool ok) {
+        string memory sig = "file(bytes32, uint256)";
         (ok,) = address(pot).call(abi.encodeWithSignature(sig, what, data));
     }
 
@@ -421,12 +421,12 @@ contract EndTest is DSTest {
 
         vat.file("gold", "spot", ray(1 ether));     // now unsafe
 
-        uint auction = cat.bite("gold", urn1);  // CDP liquidated
+        uint256 auction = cat.bite("gold", urn1);  // CDP liquidated
         assertEq(vat.vice(), rad(15 ether));    // now there is sin
         // get 1 dai from ali
         ali.move(address(ali), address(this), rad(1 ether));
         vat.hope(address(gold.flip));
-        (,uint lot,,,,,,) = gold.flip.bids(auction);
+        (,uint256 lot,,,,,,) = gold.flip.bids(auction);
         gold.flip.tend(auction, lot, rad(1 ether)); // bid 1 dai
         assertEq(dai(urn1), 14 ether);
 

@@ -19,25 +19,25 @@ contract Guy {
         Vat(address(flap.vat())).hope(address(flap));
         DSToken(address(flap.gem())).approve(address(flap));
     }
-    function tend(uint id, uint lot, uint bid) public {
+    function tend(uint256 id, uint256 lot, uint256 bid) public {
         flap.tend(id, lot, bid);
     }
-    function deal(uint id) public {
+    function deal(uint256 id) public {
         flap.deal(id);
     }
-    function try_tend(uint id, uint lot, uint bid)
+    function try_tend(uint256 id, uint256 lot, uint256 bid)
         public returns (bool ok)
     {
         string memory sig = "tend(uint256,uint256,uint256)";
         (ok,) = address(flap).call(abi.encodeWithSignature(sig, id, lot, bid));
     }
-    function try_deal(uint id)
+    function try_deal(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "deal(uint256)";
         (ok,) = address(flap).call(abi.encodeWithSignature(sig, id));
     }
-    function try_tick(uint id)
+    function try_tick(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "tick(uint256)";
@@ -88,7 +88,7 @@ contract FlapTest is DSTest {
         assertEq(vat.dai(address(flap)),  100 ether);
     }
     function test_tend() public {
-        uint id = flap.kick({ lot: 100 ether
+        uint256 id = flap.kick({ lot: 100 ether
                             , bid: 0
                             });
         // lot taken from creator
@@ -117,7 +117,7 @@ contract FlapTest is DSTest {
         assertEq(gem.balanceOf(address(flap)),   0 ether);
     }
     function test_tend_same_bidder() public {
-        uint id = flap.kick({ lot: 100 ether
+        uint256 id = flap.kick({ lot: 100 ether
                             , bid: 0
                             });
         Guy(ali).tend(id, 100 ether, 190 ether);
@@ -126,7 +126,7 @@ contract FlapTest is DSTest {
         assertEq(gem.balanceOf(ali), 0);
     }
     function test_beg() public {
-        uint id = flap.kick({ lot: 100 ether
+        uint256 id = flap.kick({ lot: 100 ether
                             , bid: 0
                             });
         assertTrue( Guy(ali).try_tend(id, 100 ether, 1.00 ether));
@@ -137,7 +137,7 @@ contract FlapTest is DSTest {
     }
     function test_tick() public {
         // start an auction
-        uint id = flap.kick({ lot: 100 ether
+        uint256 id = flap.kick({ lot: 100 ether
                             , bid: 0
                             });
         // check no tick

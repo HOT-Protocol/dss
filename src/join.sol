@@ -22,19 +22,19 @@ pragma solidity 0.5.15;
 import "./lib.sol";
 
 interface GemLike {
-    function decimals() external view returns (uint);
-    function transfer(address,uint) external returns (bool);
-    function transferFrom(address,address,uint) external returns (bool);
+    function decimals() external view returns (uint256);
+    function transfer(address,uint256) external returns (bool);
+    function transferFrom(address,address,uint256) external returns (bool);
 }
 
 interface DSTokenLike {
-    function mint(address,uint) external;
-    function burn(address,uint) external;
+    function mint(address,uint256) external;
+    function burn(address,uint256) external;
 }
 
 interface VatLike {
-    function slip(bytes32,address,int) external;
-    function move(address,address,uint) external;
+    function slip(bytes32,address,int256) external;
+    function move(address,address,uint256) external;
 }
 
 /*
@@ -63,7 +63,7 @@ interface VatLike {
 
 contract GemJoin is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { wards[usr] = 1; }
     function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
@@ -74,8 +74,8 @@ contract GemJoin is LibNote {
     VatLike public vat;   // CDP Engine
     bytes32 public ilk;   // Collateral Type
     GemLike public gem;
-    uint    public dec;
-    uint    public live;  // Active Flag
+    uint256    public dec;
+    uint256    public live;  // Active Flag
 
     constructor(address vat_, bytes32 ilk_, address gem_) public {
         wards[msg.sender] = 1;
@@ -88,22 +88,22 @@ contract GemJoin is LibNote {
     function cage() external note auth {
         live = 0;
     }
-    function join(address usr, uint wad) external note {
+    function join(address usr, uint256 wad) external note {
         require(live == 1, "GemJoin/not-live");
-        require(int(wad) >= 0, "GemJoin/overflow");
-        vat.slip(ilk, usr, int(wad));
+        require(int256(wad) >= 0, "GemJoin/overflow");
+        vat.slip(ilk, usr, int256(wad));
         require(gem.transferFrom(msg.sender, address(this), wad), "GemJoin/failed-transfer");
     }
-    function exit(address usr, uint wad) external note {
+    function exit(address usr, uint256 wad) external note {
         require(wad <= 2 ** 255, "GemJoin/overflow");
-        vat.slip(ilk, msg.sender, -int(wad));
+        vat.slip(ilk, msg.sender, -int256(wad));
         require(gem.transfer(usr, wad), "GemJoin/failed-transfer");
     }
 }
 
 contract DaiJoin is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { wards[usr] = 1; }
     function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
@@ -113,7 +113,7 @@ contract DaiJoin is LibNote {
 
     VatLike public vat;      // CDP Engine
     DSTokenLike public dai;  // Stablecoin Token
-    uint    public live;     // Active Flag
+    uint256    public live;     // Active Flag
 
     constructor(address vat_, address dai_) public {
         wards[msg.sender] = 1;
@@ -124,15 +124,15 @@ contract DaiJoin is LibNote {
     function cage() external note auth {
         live = 0;
     }
-    uint constant ONE = 10 ** 27;
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    uint256 constant ONE = 10 ** 27;
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "DaiJoin/mul-overflow");
     }
-    function join(address usr, uint wad) external note {
+    function join(address usr, uint256 wad) external note {
         vat.move(address(this), usr, mul(ONE, wad));
         dai.burn(msg.sender, wad);
     }
-    function exit(address usr, uint wad) external note {
+    function exit(address usr, uint256 wad) external note {
         require(live == 1, "DaiJoin/not-live");
         vat.move(msg.sender, address(this), mul(ONE, wad));
         dai.mint(usr, wad);

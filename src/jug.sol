@@ -26,12 +26,12 @@ interface VatLike {
         uint256 Art,   // [wad]
         uint256 rate   // [ray]
     );
-    function fold(bytes32,address,int) external;
+    function fold(bytes32,address,int256) external;
 }
 
 contract Jug is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { wards[usr] = 1; }
     function deny(address usr) external note auth { wards[usr] = 0; }
     modifier auth {
@@ -57,7 +57,7 @@ contract Jug is LibNote {
     }
 
     // --- Math ---
-    function rpow(uint x, uint n, uint b) internal pure returns (uint z) {
+    function rpow(uint256 x, uint256 n, uint256 b) internal pure returns (uint256 z) {
       assembly {
         switch x case 0 {switch n case 0 {z := b} default {z := 0}}
         default {
@@ -81,15 +81,15 @@ contract Jug is LibNote {
       }
     }
     uint256 constant ONE = 10 ** 27;
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         require(z >= x, "Jug/add-overflow");
     }
-    function diff(uint x, uint y) internal pure returns (int z) {
-        z = int(x) - int(y);
-        require(int(x) >= 0 && int(y) >= 0, "Jug/int-overflow");
+    function diff(uint256 x, uint256 y) internal pure returns (int256 z) {
+        z = int256(x) - int256(y);
+        require(int256(x) >= 0 && int256(y) >= 0, "Jug/int256-overflow");
     }
-    function rmul(uint x, uint y) internal pure returns (uint z) {
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         require(y == 0 || z / y == x, "Jug/mul-overflow");
         z = z / ONE;
@@ -102,12 +102,12 @@ contract Jug is LibNote {
         i.duty = ONE;
         i.rho  = now;
     }
-    function file(bytes32 ilk, bytes32 what, uint data) external note auth {
+    function file(bytes32 ilk, bytes32 what, uint256 data) external note auth {
         require(now == ilks[ilk].rho, "Jug/rho-not-updated");
         if (what == "duty") ilks[ilk].duty = data;
         else revert("Jug/file-unrecognized-param");
     }
-    function file(bytes32 what, uint data) external note auth {
+    function file(bytes32 what, uint256 data) external note auth {
         if (what == "base") base = data;
         else revert("Jug/file-unrecognized-param");
     }
@@ -117,9 +117,9 @@ contract Jug is LibNote {
     }
 
     // --- Stability Fee Collection ---
-    function drip(bytes32 ilk) external note returns (uint rate) {
+    function drip(bytes32 ilk) external note returns (uint256 rate) {
         require(now >= ilks[ilk].rho, "Jug/invalid-now");
-        (, uint prev) = vat.ilks(ilk);
+        (, uint256 prev) = vat.ilks(ilk);
         rate = rmul(rpow(add(base, ilks[ilk].duty), now - ilks[ilk].rho, ONE), prev);
         vat.fold(ilk, vow, diff(rate, prev));
         ilks[ilk].rho = now;

@@ -21,7 +21,7 @@ pragma solidity 0.5.15;
 
 contract Vat {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address usr) external note auth { require(live == 1, "Vat/not-live"); wards[usr] = 1; }
     function deny(address usr) external note auth { require(live == 1, "Vat/not-live"); wards[usr] = 0; }
     modifier auth {
@@ -29,7 +29,7 @@ contract Vat {
         _;
     }
 
-    mapping(address => mapping (address => uint)) public can;
+    mapping(address => mapping (address => uint256)) public can;
     function hope(address usr) external note { can[msg.sender][usr] = 1; }
     function nope(address usr) external note { can[msg.sender][usr] = 0; }
     function wish(address bit, address usr) internal view returns (bool) {
@@ -51,7 +51,7 @@ contract Vat {
 
     mapping (bytes32 => Ilk)                       public ilks;
     mapping (bytes32 => mapping (address => Urn )) public urns;
-    mapping (bytes32 => mapping (address => uint)) public gem;  // [wad]
+    mapping (bytes32 => mapping (address => uint256)) public gem;  // [wad]
     mapping (address => uint256)                   public dai;  // [rad]
     mapping (address => uint256)                   public sin;  // [rad]
 
@@ -95,28 +95,28 @@ contract Vat {
     }
 
     // --- Math ---
-    function add(uint x, int y) internal pure returns (uint z) {
-        z = x + uint(y);
+    function add(uint256 x, int256 y) internal pure returns (uint256 z) {
+        z = x + uint256(y);
         require(y >= 0 || z <= x, "Vat/add-overflow");
         require(y <= 0 || z >= x, "Vat/add-overflow");
     }
-    function sub(uint x, int y) internal pure returns (uint z) {
-        z = x - uint(y);
+    function sub(uint256 x, int256 y) internal pure returns (uint256 z) {
+        z = x - uint256(y);
         require(y <= 0 || z <= x, "Vat/sub-underflow");
         require(y >= 0 || z >= x, "Vat/sub-underflow");
     }
-    function mul(uint x, int y) internal pure returns (int z) {
-        z = int(x) * y;
-        require(int(x) >= 0, "Vat/mul-overflow");
-        require(y == 0 || z / y == int(x), "Vat/mul-overflow");
+    function mul(uint256 x, int256 y) internal pure returns (int256 z) {
+        z = int256(x) * y;
+        require(int256(x) >= 0, "Vat/mul-overflow");
+        require(y == 0 || z / y == int256(x), "Vat/mul-overflow");
     }
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "Vat/add-overflow");
     }
-    function sub(uint x, uint y) internal pure returns (uint z) {
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "Vat/sub-underflow");
     }
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "Vat/mul-overflow");
     }
 
@@ -125,12 +125,12 @@ contract Vat {
         require(ilks[ilk].rate == 0, "Vat/ilk-already-init");
         ilks[ilk].rate = 10 ** 27;
     }
-    function file(bytes32 what, uint data) external note auth {
+    function file(bytes32 what, uint256 data) external note auth {
         require(live == 1, "Vat/not-live");
         if (what == "Line") Line = data;
         else revert("Vat/file-unrecognized-param");
     }
-    function file(bytes32 ilk, bytes32 what, uint data) external note auth {
+    function file(bytes32 ilk, bytes32 what, uint256 data) external note auth {
         require(live == 1, "Vat/not-live");
         if (what == "spot") ilks[ilk].spot = data;
         else if (what == "line") ilks[ilk].line = data;
@@ -164,7 +164,7 @@ contract Vat {
     }
 
     // --- CDP Manipulation ---
-    function frob(bytes32 i, address u, address v, address w, int dink, int dart) external note {
+    function frob(bytes32 i, address u, address v, address w, int256 dink, int256 dart) external note {
         // system is live
         require(live == 1, "Vat/not-live");
 
@@ -177,8 +177,8 @@ contract Vat {
         urn.art = add(urn.art, dart);
         ilk.Art = add(ilk.Art, dart);
 
-        int dtab = mul(ilk.rate, dart);
-        uint tab = mul(ilk.rate, urn.art);
+        int256 dtab = mul(ilk.rate, dart);
+        uint256 tab = mul(ilk.rate, urn.art);
         debt     = add(debt, dtab);
 
         // either debt has decreased, or debt ceilings are not exceeded
@@ -203,7 +203,7 @@ contract Vat {
         ilks[i]    = ilk;
     }
     // --- CDP Fungibility ---
-    function fork(bytes32 ilk, address src, address dst, int dink, int dart) external note {
+    function fork(bytes32 ilk, address src, address dst, int256 dink, int256 dart) external note {
         Urn storage u = urns[ilk][src];
         Urn storage v = urns[ilk][dst];
         Ilk storage i = ilks[ilk];
@@ -213,8 +213,8 @@ contract Vat {
         v.ink = add(v.ink, dink);
         v.art = add(v.art, dart);
 
-        uint utab = mul(u.art, i.rate);
-        uint vtab = mul(v.art, i.rate);
+        uint256 utab = mul(u.art, i.rate);
+        uint256 vtab = mul(v.art, i.rate);
 
         // both sides consent
         require(both(wish(src, msg.sender), wish(dst, msg.sender)), "Vat/not-allowed");
@@ -228,7 +228,7 @@ contract Vat {
         require(either(vtab >= i.dust, v.art == 0), "Vat/dust-dst");
     }
     // --- CDP Confiscation ---
-    function grab(bytes32 i, address u, address v, address w, int dink, int dart) external note auth {
+    function grab(bytes32 i, address u, address v, address w, int256 dink, int256 dart) external note auth {
         Urn storage urn = urns[i][u];
         Ilk storage ilk = ilks[i];
 
@@ -236,7 +236,7 @@ contract Vat {
         urn.art = add(urn.art, dart);
         ilk.Art = add(ilk.Art, dart);
 
-        int dtab = mul(ilk.rate, dart);
+        int256 dtab = mul(ilk.rate, dart);
 
         gem[i][v] = sub(gem[i][v], dink);
         sin[w]    = sub(sin[w],    dtab);
@@ -244,14 +244,14 @@ contract Vat {
     }
 
     // --- Settlement ---
-    function heal(uint rad) external note {
+    function heal(uint256 rad) external note {
         address u = msg.sender;
         sin[u] = sub(sin[u], rad);
         dai[u] = sub(dai[u], rad);
         vice   = sub(vice,   rad);
         debt   = sub(debt,   rad);
     }
-    function suck(address u, address v, uint rad) external note auth {
+    function suck(address u, address v, uint256 rad) external note auth {
         sin[u] = add(sin[u], rad);
         dai[v] = add(dai[v], rad);
         vice   = add(vice,   rad);
@@ -259,11 +259,11 @@ contract Vat {
     }
 
     // --- Rates ---
-    function fold(bytes32 i, address u, int rate) external note auth {
+    function fold(bytes32 i, address u, int256 rate) external note auth {
         require(live == 1, "Vat/not-live");
         Ilk storage ilk = ilks[i];
         ilk.rate = add(ilk.rate, rate);
-        int rad  = mul(ilk.Art, rate);
+        int256 rad  = mul(ilk.Art, rate);
         dai[u]   = add(dai[u], rad);
         debt     = add(debt,   rad);
     }

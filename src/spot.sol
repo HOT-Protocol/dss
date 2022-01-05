@@ -20,7 +20,7 @@ pragma solidity 0.5.15;
 import "./lib.sol";
 
 interface VatLike {
-    function file(bytes32, bytes32, uint) external;
+    function file(bytes32, bytes32, uint256) external;
 }
 
 interface PipLike {
@@ -29,7 +29,7 @@ interface PipLike {
 
 contract Spotter is LibNote {
     // --- Auth ---
-    mapping (address => uint) public wards;
+    mapping (address => uint256) public wards;
     function rely(address guy) external note auth { wards[guy] = 1;  }
     function deny(address guy) external note auth { wards[guy] = 0; }
     modifier auth {
@@ -66,12 +66,12 @@ contract Spotter is LibNote {
     }
 
     // --- Math ---
-    uint constant ONE = 10 ** 27;
+    uint256 constant ONE = 10 ** 27;
 
-    function mul(uint x, uint y) internal pure returns (uint z) {
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "Spotter/mul-overflow");
     }
-    function rdiv(uint x, uint y) internal pure returns (uint z) {
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = mul(x, ONE) / y;
     }
 
@@ -81,12 +81,12 @@ contract Spotter is LibNote {
         if (what == "pip") ilks[ilk].pip = PipLike(pip_);
         else revert("Spotter/file-unrecognized-param");
     }
-    function file(bytes32 what, uint data) external note auth {
+    function file(bytes32 what, uint256 data) external note auth {
         require(live == 1, "Spotter/not-live");
         if (what == "par") par = data;
         else revert("Spotter/file-unrecognized-param");
     }
-    function file(bytes32 ilk, bytes32 what, uint data) external note auth {
+    function file(bytes32 ilk, bytes32 what, uint256 data) external note auth {
         require(live == 1, "Spotter/not-live");
         if (what == "mat") ilks[ilk].mat = data;
         else revert("Spotter/file-unrecognized-param");
@@ -95,7 +95,7 @@ contract Spotter is LibNote {
     // --- Update value ---
     function poke(bytes32 ilk) external {
         (bytes32 val, bool has) = ilks[ilk].pip.peek();
-        uint256 spot = has ? rdiv(rdiv(mul(uint(val), 10 ** 9), par), ilks[ilk].mat) : 0;
+        uint256 spot = has ? rdiv(rdiv(mul(uint256(val), 10 ** 9), par), ilks[ilk].mat) : 0;
         vat.file(ilk, "spot", spot);
         emit Poke(ilk, val, spot);
     }

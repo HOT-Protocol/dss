@@ -20,40 +20,40 @@ contract Guy {
     function hope(address usr) public {
         Vat(address(flip.vat())).hope(usr);
     }
-    function tend(uint id, uint lot, uint bid) public {
+    function tend(uint256 id, uint256 lot, uint256 bid) public {
         flip.tend(id, lot, bid);
     }
-    function dent(uint id, uint lot, uint bid) public {
+    function dent(uint256 id, uint256 lot, uint256 bid) public {
         flip.dent(id, lot, bid);
     }
-    function deal(uint id) public {
+    function deal(uint256 id) public {
         flip.deal(id);
     }
-    function try_tend(uint id, uint lot, uint bid)
+    function try_tend(uint256 id, uint256 lot, uint256 bid)
         public returns (bool ok)
     {
         string memory sig = "tend(uint256,uint256,uint256)";
         (ok,) = address(flip).call(abi.encodeWithSignature(sig, id, lot, bid));
     }
-    function try_dent(uint id, uint lot, uint bid)
+    function try_dent(uint256 id, uint256 lot, uint256 bid)
         public returns (bool ok)
     {
         string memory sig = "dent(uint256,uint256,uint256)";
         (ok,) = address(flip).call(abi.encodeWithSignature(sig, id, lot, bid));
     }
-    function try_deal(uint id)
+    function try_deal(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "deal(uint256)";
         (ok,) = address(flip).call(abi.encodeWithSignature(sig, id));
     }
-    function try_tick(uint id)
+    function try_tick(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "tick(uint256)";
         (ok,) = address(flip).call(abi.encodeWithSignature(sig, id));
     }
-    function try_yank(uint id)
+    function try_yank(uint256 id)
         public returns (bool ok)
     {
         string memory sig = "yank(uint256)";
@@ -74,17 +74,17 @@ contract Cat_ is Cat {
 }
 
 contract Vat_ is Vat {
-    function mint(address usr, uint wad) public {
+    function mint(address usr, uint256 wad) public {
         dai[usr] += wad;
     }
-    function dai_balance(address usr) public view returns (uint) {
+    function dai_balance(address usr) public view returns (uint256) {
         return dai[usr];
     }
     bytes32 ilk;
     function set_ilk(bytes32 ilk_) public {
         ilk = ilk_;
     }
-    function gem_balance(address usr) public view returns (uint) {
+    function gem_balance(address usr) public view returns (uint256) {
         return gem[ilk][usr];
     }
 }
@@ -130,7 +130,7 @@ contract FlipTest is DSTest {
         vat.mint(ali, 200 ether);
         vat.mint(bob, 200 ether);
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
     function test_kick() public {
@@ -146,7 +146,7 @@ contract FlipTest is DSTest {
         flip.tend(42, 0, 0);
     }
     function test_tend() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -173,7 +173,7 @@ contract FlipTest is DSTest {
         assertEq(vat.gem_balance(bob), 100 ether);
     }
     function test_tend_later() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -188,7 +188,7 @@ contract FlipTest is DSTest {
         assertEq(vat.dai_balance(gal),   1 ether);
     }
     function test_dent() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -204,7 +204,7 @@ contract FlipTest is DSTest {
         assertEq(vat.dai_balance(bob),  200 ether);
     }
     function test_tend_dent_same_bidder() public {
-       uint id = flip.kick({ lot: 100 ether
+       uint256 id = flip.kick({ lot: 100 ether
                             , tab: 200 ether
                             , usr: usr
                             , gal: gal
@@ -219,7 +219,7 @@ contract FlipTest is DSTest {
         Guy(ali).dent(id, 80 ether, 200 ether);
     }
     function test_beg() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -240,7 +240,7 @@ contract FlipTest is DSTest {
         assertTrue( Guy(ali).try_dent(id,  95 ether, 50 ether));
     }
     function test_deal() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -253,7 +253,7 @@ contract FlipTest is DSTest {
         hevm.warp(now + 4.1 hours);
         assertTrue( Guy(bob).try_deal(id));
 
-        uint ie = flip.kick({ lot: 100 ether
+        uint256 ie = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -269,7 +269,7 @@ contract FlipTest is DSTest {
     }
     function test_tick() public {
         // start an auction
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -288,7 +288,7 @@ contract FlipTest is DSTest {
     function test_no_deal_after_end() public {
         // if there are no bids and the auction ends, then it should not
         // be refundable to the creator. Rather, it ticks indefinitely.
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal
@@ -301,7 +301,7 @@ contract FlipTest is DSTest {
         assertTrue(!Guy(ali).try_deal(id));
     }
     function test_yank_tend() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: rad(50 ether)
                             , usr: usr
                             , gal: gal
@@ -331,7 +331,7 @@ contract FlipTest is DSTest {
         assertEq(cat.litter(), (5 * MLN * RAD) - rad(50 ether));
     }
     function test_yank_dent() public {
-        uint id = flip.kick({ lot: 100 ether
+        uint256 id = flip.kick({ lot: 100 ether
                             , tab: 50 ether
                             , usr: usr
                             , gal: gal

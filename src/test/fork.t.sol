@@ -22,7 +22,7 @@ contract Usr {
             revert(free, 32)
         }
     }
-    function can_frob(bytes32 ilk, address u, address v, address w, int dink, int dart) public returns (bool) {
+    function can_frob(bytes32 ilk, address u, address v, address w, int256 dink, int256 dart) public returns (bool) {
         string memory sig = "frob(bytes32,address,address,address,int256,int256)";
         bytes memory data = abi.encodeWithSignature(sig, ilk, u, v, w, dink, dart);
 
@@ -32,7 +32,7 @@ contract Usr {
         ok = abi.decode(success, (bool));
         if (ok) return true;
     }
-    function can_fork(bytes32 ilk, address src, address dst, int dink, int dart) public returns (bool) {
+    function can_fork(bytes32 ilk, address src, address dst, int256 dink, int256 dart) public returns (bool) {
         string memory sig = "fork(bytes32,address,address,int256,int256)";
         bytes memory data = abi.encodeWithSignature(sig, ilk, src, dst, dink, dart);
 
@@ -42,10 +42,10 @@ contract Usr {
         ok = abi.decode(success, (bool));
         if (ok) return true;
     }
-    function frob(bytes32 ilk, address u, address v, address w, int dink, int dart) public {
+    function frob(bytes32 ilk, address u, address v, address w, int256 dink, int256 dart) public {
         vat.frob(ilk, u, v, w, dink, dart);
     }
-    function fork(bytes32 ilk, address src, address dst, int dink, int dart) public {
+    function fork(bytes32 ilk, address src, address dst, int256 dink, int256 dart) public {
         vat.fork(ilk, src, dst, dink, dart);
     }
     function hope(address usr) public {
@@ -61,10 +61,10 @@ contract ForkTest is DSTest {
     address a;
     address b;
 
-    function ray(uint wad) internal pure returns (uint) {
+    function ray(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 9;
     }
-    function rad(uint wad) internal pure returns (uint) {
+    function rad(uint256 wad) internal pure returns (uint256) {
         return wad * 10 ** 27;
     }
 

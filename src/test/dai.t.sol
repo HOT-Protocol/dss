@@ -30,21 +30,21 @@ contract TokenUser {
         token = token_;
     }
 
-    function doTransferFrom(address from, address to, uint amount)
+    function doTransferFrom(address from, address to, uint256 amount)
         public
         returns (bool)
     {
         return token.transferFrom(from, to, amount);
     }
 
-    function doTransfer(address to, uint amount)
+    function doTransfer(address to, uint256 amount)
         public
         returns (bool)
     {
         return token.transfer(to, amount);
     }
 
-    function doApprove(address recipient, uint amount)
+    function doApprove(address recipient, uint256 amount)
         public
         returns (bool)
     {
@@ -54,12 +54,12 @@ contract TokenUser {
     function doAllowance(address owner, address spender)
         public
         view
-        returns (uint)
+        returns (uint256)
     {
         return token.allowance(owner, spender);
     }
 
-    function doBalanceOf(address who) public view returns (uint) {
+    function doBalanceOf(address who) public view returns (uint256) {
         return token.balanceOf(who);
     }
 
@@ -67,18 +67,18 @@ contract TokenUser {
         public
         returns (bool)
     {
-        return token.approve(guy, uint(-1));
+        return token.approve(guy, uint256(-1));
     }
-    function doMint(uint wad) public {
+    function doMint(uint256 wad) public {
         token.mint(address(this), wad);
     }
-    function doBurn(uint wad) public {
+    function doBurn(uint256 wad) public {
         token.burn(address(this), wad);
     }
-    function doMint(address guy, uint wad) public {
+    function doMint(address guy, uint256 wad) public {
         token.mint(guy, wad);
     }
-    function doBurn(address guy, uint wad) public {
+    function doBurn(address guy, uint256 wad) public {
         token.burn(guy, wad);
     }
 
@@ -89,8 +89,8 @@ interface Hevm {
 }
 
 contract DaiTest is DSTest {
-    uint constant initialBalanceThis = 1000;
-    uint constant initialBalanceCal = 100;
+    uint256 constant initialBalanceThis = 1000;
+    uint256 constant initialBalanceCal = 100;
 
     Dai token;
     Hevm hevm;
@@ -98,10 +98,10 @@ contract DaiTest is DSTest {
     address user2;
     address self;
 
-    uint amount = 2;
-    uint fee = 1;
-    uint nonce = 0;
-    uint deadline = 0;
+    uint256 amount = 2;
+    uint256 fee = 1;
+    uint256 nonce = 0;
+    uint256 deadline = 0;
     address cal = 0x29C76e6aD8f28BB1004902578Fb108c507Be341b;
     address del = 0xdd2d5D3f7f1b35b7A0601D6A00DbB7D44Af58479;
     bytes32 r = 0x46323dda87c592902a10f931e64a8160ae899d141f46b07a73e676b0e5daa1c4;
@@ -140,7 +140,7 @@ contract DaiTest is DSTest {
     }
 
     function testValidTransfers() public logs_gas {
-        uint sentAmount = 250;
+        uint256 sentAmount = 250;
         emit log_named_address("token11111", address(token));
         token.transfer(user2, sentAmount);
         assertEq(token.balanceOf(user2), sentAmount);
@@ -148,12 +148,12 @@ contract DaiTest is DSTest {
     }
 
     function testFailWrongAccountTransfers() public logs_gas {
-        uint sentAmount = 250;
+        uint256 sentAmount = 250;
         token.transferFrom(user2, self, sentAmount);
     }
 
     function testFailInsufficientFundsTransfers() public logs_gas {
-        uint sentAmount = 250;
+        uint256 sentAmount = 250;
         token.transfer(user1, initialBalanceThis - sentAmount);
         token.transfer(user2, sentAmount + 1);
     }
@@ -168,7 +168,7 @@ contract DaiTest is DSTest {
     }
 
     function testChargesAmountApproved() public logs_gas {
-        uint amountApproved = 20;
+        uint256 amountApproved = 20;
         token.approve(user2, amountApproved);
         assertTrue(TokenUser(user2).doTransferFrom(self, user2, amountApproved));
         assertEq(token.balanceOf(self), initialBalanceThis - amountApproved);
@@ -194,12 +194,12 @@ contract DaiTest is DSTest {
         token.transferFrom(self, self, token.balanceOf(self) + 1);
     }
     function testMintself() public {
-        uint mintAmount = 10;
+        uint256 mintAmount = 10;
         token.mint(address(this), mintAmount);
         assertEq(token.balanceOf(self), initialBalanceThis + mintAmount);
     }
     function testMintGuy() public {
-        uint mintAmount = 10;
+        uint256 mintAmount = 10;
         token.mint(user1, mintAmount);
         assertEq(token.balanceOf(user1), mintAmount);
     }
@@ -212,17 +212,17 @@ contract DaiTest is DSTest {
     }
 
     function testBurn() public {
-        uint burnAmount = 10;
+        uint256 burnAmount = 10;
         token.burn(address(this), burnAmount);
         assertEq(token.totalSupply(), initialBalanceThis + initialBalanceCal - burnAmount);
     }
     function testBurnself() public {
-        uint burnAmount = 10;
+        uint256 burnAmount = 10;
         token.burn(address(this), burnAmount);
         assertEq(token.balanceOf(self), initialBalanceThis - burnAmount);
     }
     function testBurnGuyWithTrust() public {
-        uint burnAmount = 10;
+        uint256 burnAmount = 10;
         token.transfer(user1, burnAmount);
         assertEq(token.balanceOf(user1), burnAmount);
 
@@ -248,13 +248,13 @@ contract DaiTest is DSTest {
     }
     function testTrusting() public {
         assertEq(token.allowance(self, user2), 0);
-        token.approve(user2, uint(-1));
-        assertEq(token.allowance(self, user2), uint(-1));
+        token.approve(user2, uint256(-1));
+        assertEq(token.allowance(self, user2), uint256(-1));
         token.approve(user2, 0);
         assertEq(token.allowance(self, user2), 0);
     }
     function testTrustedTransferFrom() public {
-        token.approve(user1, uint(-1));
+        token.approve(user1, uint256(-1));
         TokenUser(user1).doTransferFrom(self, user2, 200);
         assertEq(token.balanceOf(user2), 200);
     }
@@ -270,11 +270,11 @@ contract DaiTest is DSTest {
     function testApproveWillNotModifyAllowance() public {
         assertEq(token.allowance(self, user1), 0);
         assertEq(token.balanceOf(user1), 0);
-        token.approve(user1, uint(-1));
-        assertEq(token.allowance(self, user1), uint(-1));
+        token.approve(user1, uint256(-1));
+        assertEq(token.allowance(self, user1), uint256(-1));
         TokenUser(user1).doTransferFrom(self, user1, 1000);
         assertEq(token.balanceOf(user1), 1000);
-        assertEq(token.allowance(self, user1), uint(-1));
+        assertEq(token.allowance(self, user1), uint256(-1));
     }
     function testDaiAddress() public {
         //The dai address generated by hevm
@@ -294,7 +294,7 @@ contract DaiTest is DSTest {
         assertEq(token.nonces(cal), 0);
         assertEq(token.allowance(cal, del), 0);
         token.permit(cal, del, 0, 0, true, v, r, s);
-        assertEq(token.allowance(cal, del),uint(-1));
+        assertEq(token.allowance(cal, del),uint256(-1));
         assertEq(token.nonces(cal),1);
     }
 
@@ -306,7 +306,7 @@ contract DaiTest is DSTest {
     function testPermitWithExpiry() public {
         assertEq(now, 604411200);
         token.permit(cal, del, 0, 604411200 + 1 hours, true, _v, _r, _s);
-        assertEq(token.allowance(cal, del),uint(-1));
+        assertEq(token.allowance(cal, del),uint256(-1));
         assertEq(token.nonces(cal),1);
     }
 
