@@ -104,11 +104,19 @@ contract Dai is LibNote {
         totalSupply    = sub(totalSupply, wad);
         emit Transfer(usr, address(0), wad);
     }
-    function approve(address usr, uint256 wad) external returns (bool) {
+    function approve(address usr, uint256 wad) public returns (bool) {
         require(usr != address(0), "Hgbp/zero-address");
         allowance[msg.sender][usr] = wad;
         emit Approval(msg.sender, usr, wad);
         return true;
+    }
+    function increaseApproval(address usr, uint256 wad) external returns (bool) {
+        return approve(usr, add(allowance[msg.sender][usr], wad));
+    }
+    function decreaseApproval(address usr, uint256 wad) external returns (bool) {
+        uint256 curr = allowance[msg.sender][usr];
+        require(curr >= wad, "Hgbp/decreased-approval-below-zero");
+        return approve(usr, sub(curr, wad));
     }
 
     // --- Alias ---
