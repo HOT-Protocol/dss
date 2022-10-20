@@ -150,6 +150,7 @@ contract Cat is LibNote {
         if (uits[urn] == 0){
             uits[urn]= block.timestamp;
             emit Lick(ilk, urn, block.timestamp);
+            return;
         }else {
             require(block.timestamp > uits[urn] + ttl, "Cat/undue");
         }
