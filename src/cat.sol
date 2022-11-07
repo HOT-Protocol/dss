@@ -65,7 +65,9 @@ contract Cat is LibNote {
     }
 
     mapping (bytes32 => Ilk) public ilks;
-
+    mapping (address => uint256) public uits; // Infection time for urn
+    
+    uint256 public ttl;    // Infection cache
     uint256 public live;   // Active Flag
     VatLike public vat;    // CDP Engine
     VowLike public vow;    // Debt Engine
@@ -73,6 +75,12 @@ contract Cat is LibNote {
     uint256 public litter; // Balance of Dai out for liquidation [rad]
 
     // --- Events ---
+    event Lick(
+        bytes32 indexed ilk,
+        address indexed urn,
+        uint256 lickTime
+    );
+
     event Bite(
       bytes32 indexed ilk,
       address indexed urn,
@@ -113,6 +121,7 @@ contract Cat is LibNote {
     }
     function file(bytes32 what, uint256 data) external note auth {
         if (what == "box") box = data;
+        else if(what == "ttl") ttl = data;
         else revert("Cat/file-unrecognized-param");
     }
     function file(bytes32 ilk, bytes32 what, uint256 data) external note auth {
@@ -137,6 +146,15 @@ contract Cat is LibNote {
         require(live == 1, "Cat/not-live");
         require(spot > 0 && mul(ink, spot) < mul(art, rate), "Cat/not-unsafe");
 
+        // Verify the clearing time and set it if it does not exist
+        if (uits[urn] == 0){
+            uits[urn]= block.timestamp;
+            emit Lick(ilk, urn, block.timestamp);
+            return 0;
+        }else {
+            require(block.timestamp > uits[urn] + ttl, "Cat/undue");
+        }
+
         Ilk memory milk = ilks[ilk];
         uint256 dart;
         {
@@ -145,10 +163,13 @@ contract Cat is LibNote {
             // test whether the remaining space in the litterbox is dusty
             require(litter < box && room >= dust, "Cat/liquidation-limit-hit");
 
-            dart = min(art, mul(min(milk.dunk, room), WAD) / rate / milk.chop);
+            //dart = min(art, mul(min(milk.dunk, room), WAD) / rate / milk.chop);
+            //Full liquidation by default
+            dart = art;
         }
 
-        uint256 dink = min(ink, mul(ink, dart) / art);
+        //uint256 dink = min(ink, mul(ink, dart) / art);
+        uint256 dink = ink;
 
         require(dart >  0      && dink >  0     , "Cat/null-auction");
         require(dart <= 2**255 && dink <= 2**255, "Cat/overflow"    );
@@ -173,6 +194,9 @@ contract Cat is LibNote {
                 bid: 0
             });
         }
+
+        // delete bite urn lickTime
+        delete uits[urn];
 
         emit Bite(ilk, urn, dink, dart, mul(dart, rate), milk.flip, id);
     }
